@@ -1,0 +1,52 @@
+import unittest
+from StaticAnalyzer import StaticAnalyzer, generate_feature_vector
+
+class TestStaticAnalyzer(unittest.TestCase):
+
+    def analyze(self, code):
+        analyzer = StaticAnalyzer()
+        return analyzer.analyze(code)
+
+    def test_eval_detection(self):
+        code = "eval(input())"
+        results = self.analyze(code)
+        self.assertTrue(any(v['type'] == 'Dangerous Function Call' for v in results))
+
+    def test_sql_injection_detection(self):
+        code = "cursor.execute('SELECT * FROM users WHERE name = ' + name)"
+        results = self.analyze(code)
+        self.assertTrue(any(v['type'] == 'Dynamic SQL Query' for v in results))
+
+    def test_taint_flow(self):
+        code = """
+user = input()
+os.system(user)
+"""
+        results = self.analyze(code)
+        self.assertTrue(any(v['type'] == 'Tainted Data Flow to Dangerous Sink' for v in results))
+
+    def test_missing_error_handling(self):
+        code = "def risky():\n  return 1 / 0"
+        results = self.analyze(code)
+        self.assertTrue(any(v['type'] == 'Missing Error Handling' for v in results))
+
+    def test_nesting_depth(self):
+        code = "def deep():\n  if True:\n    if True:\n      if True:\n        if True:\n          pass"
+        results = self.analyze(code)
+        self.assertTrue(any(v['type'] == 'Excessive Control Structure Nesting' for v in results))
+
+    def test_clean_code(self):
+        code = "def safe():\n  try:\n    print('ok')\n  except: pass"
+        results = self.analyze(code)
+        self.assertEqual(len(results), 0)
+
+    def test_feature_vector_output(self):
+        code = "eval(input())"
+        analyzer = StaticAnalyzer()
+        vulns = analyzer.analyze(code)
+        vector = generate_feature_vector(vulns)
+        self.assertEqual(vector['dangerous_function_calls'], 1)
+        self.assertEqual(vector['missing_error_handling'], 1)  # no try/except
+
+if __name__ == '__main__':
+    unittest.main()
