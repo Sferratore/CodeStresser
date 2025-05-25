@@ -158,6 +158,14 @@ class StaticAnalyzer(ast.NodeVisitor):
                 "line": node.lineno
             })
 
+            # Check if the function risks buffer overflow
+            if func_name == "strcpy":
+                self.vulnerabilities.append({
+                    "type": "Copy without length control, Buffer Overflow risk",
+                    "function": func_name,
+                    "line": node.lineno
+                })
+
         # Detect dynamic SQL queries constructed via string ops
         if func_name == "cursor.execute":
             if node.args and isinstance(node.args[0], (ast.BinOp, ast.JoinedStr)):
