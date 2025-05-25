@@ -43,7 +43,7 @@ class StaticAnalyzer(ast.NodeVisitor):
         self.sinks = {
             "eval", "exec", "os.system",
             "subprocess.call", "subprocess.Popen",
-            "open", "cursor.execute", "pickle.load"
+            "open", "cursor.execute"
         }
 
         # Set of variables marked as tainted (containing data coming from non-trusted sources)
@@ -146,6 +146,14 @@ class StaticAnalyzer(ast.NodeVisitor):
         if func_name in self.sinks:
             self.vulnerabilities.append({
                 "type": "Dangerous Function Call",
+                "function": func_name,
+                "line": node.lineno
+            })
+
+        # Check if the function consists in deserialization
+        if func_name == "pickle.load":
+            self.vulnerabilities.append({
+                "type": "Unsafe Deserialization",
                 "function": func_name,
                 "line": node.lineno
             })
