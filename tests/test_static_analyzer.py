@@ -1,5 +1,5 @@
 import unittest
-from StaticAnalyzer import StaticAnalyzer, generate_feature_vector
+from prod.StaticAnalyzer import StaticAnalyzer, generate_feature_vector
 
 class TestStaticAnalyzer(unittest.TestCase):
 
