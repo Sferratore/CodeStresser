@@ -41,7 +41,7 @@ os.system(user)
         self.assertEqual(len(results), 0)
 
     def test_feature_vector_output(self):
-        code = "eval(input())"
+        code = "def f():\n eval(input())"
         analyzer = StaticAnalyzer()
         vulns = analyzer.analyze(code)
         vector = generate_feature_vector(vulns)
