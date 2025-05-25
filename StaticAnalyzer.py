@@ -1,9 +1,36 @@
 import ast
 from typing import List, Dict, Any
-import json
-import pandas as pd
 
-
+# ==============================================================================
+# StaticAnalyzer
+#
+# This class uses Python's built-in `ast` module and follows the `NodeVisitor`
+# design pattern to perform static analysis on Python code.
+#
+# HOW IT WORKS:
+# - The `ast` module parses source code into an Abstract Syntax Tree (AST).
+# - The `NodeVisitor` class walks through each node of the AST.
+# - For each node type (e.g., FunctionDef, If, Call), a method `visit_<NodeType>`
+#   is automatically invoked if defined in this class.
+#   Example: visiting a function call node → calls `visit_Call()`.
+#
+# - The `visit()` method dispatches automatically based on the node type,
+#   so you only need to implement logic in the `visit_*` methods you care about.
+#
+# - This allows StaticAnalyzer to:
+#   - Identify dangerous patterns (e.g., use of `eval`, `exec`, dynamic SQL)
+#   - Perform taint tracking (propagate tainted variables)
+#   - Analyze structural properties like control flow depth and error handling
+#
+# - Results of the analysis are collected in the `self.vulnerabilities` list,
+#   which is returned at the end of analysis.
+#
+# Example usage:
+#   analyzer = StaticAnalyzer()
+#   results = analyzer.analyze(code_as_string)
+#   features = generate_feature_vector(results)
+#
+# ==============================================================================
 class StaticAnalyzer(ast.NodeVisitor):
     def __init__(self):
         # List to store detected vulnerabilities
@@ -19,7 +46,7 @@ class StaticAnalyzer(ast.NodeVisitor):
             "open", "cursor.execute"
         }
 
-        # Set of variables marked as tainted
+        # Set of variables marked as tainted (containing data coming from non-trusted sources)
         self.tainted_vars = set()
 
         # Context for current function being analyzed
