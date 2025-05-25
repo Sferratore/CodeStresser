@@ -43,7 +43,7 @@ class StaticAnalyzer(ast.NodeVisitor):
         self.sinks = {
             "eval", "exec", "os.system",
             "subprocess.call", "subprocess.Popen",
-            "open", "cursor.execute"
+            "open", "cursor.execute", "pickle.load"
         }
 
         # Set of variables marked as tainted (containing data coming from non-trusted sources)
@@ -117,14 +117,25 @@ class StaticAnalyzer(ast.NodeVisitor):
         self.control_depth -= 1
 
     def visit_Assign(self, node: ast.Assign):
-        # If the right-hand side of an assignment is a source input,
-        # mark the target variable as tainted
+        # Handle assignment nodes, e.g., x = input()
+        # Goal: detect if the right-hand side is a tainted source (like input())
         value = node.value
+
+        # Check if the right-hand side of the assignment is a function call
         if isinstance(value, ast.Call):
-            if isinstance(value.func, ast.Name) and value.func.id in self.sources:
-                for target in node.targets:
-                    if isinstance(target, ast.Name):
-                        self.tainted_vars.add(target.id)
+            # Check if the function being called is a simple name (not an attribute like os.system)
+            if isinstance(value.func, ast.Name):
+                # Check if the function name is one of the known untrusted sources
+                if value.func.id in self.sources:
+                    # If so, mark the target variable on the left-hand side as tainted
+                    for target in node.targets:
+                        # We only mark simple variable names, not complex targets like tuples or lists
+                        if isinstance(target, ast.Name):
+                            # Add the variable to the set of tainted variables
+                            self.tainted_vars.add(target.id)
+                            # This variable now carries untrusted data from a source like input()
+
+        # Continue walking the AST for any child nodes
         self.generic_visit(node)
 
     def visit_Call(self, node: ast.Call):
