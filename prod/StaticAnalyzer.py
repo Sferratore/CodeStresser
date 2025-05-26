@@ -117,23 +117,28 @@ class StaticAnalyzer(ast.NodeVisitor):
         self.control_depth -= 1
 
     def visit_Assign(self, node: ast.Assign):
-        # Handle assignment nodes, e.g., x = input()
-        # Goal: detect if the right-hand side is a tainted source (like input())
         value = node.value
 
-        # Check if the right-hand side of the assignment is a function call
+        # Case 1: direct call like input()
         if isinstance(value, ast.Call):
-            # Check if the function being called is a simple name (not an attribute like os.system)
-            if isinstance(value.func, ast.Name):
-                # Check if the function name is one of the known untrusted sources
-                if value.func.id in self.sources:
-                    # If so, mark the target variable on the left-hand side as tainted
+            if isinstance(value.func, ast.Name) and value.func.id in self.sources:
+                for target in node.targets:
+                    if isinstance(target, ast.Name):
+                        self.tainted_vars.add(target.id)
+
+        # Case 2: request.GET[...] or request.POST[...]
+        elif isinstance(value, ast.Subscript):
+            # Check if it's something like: request.GET[...] or request.POST[...]
+            if isinstance(value.value, ast.Attribute):
+                attr = value.value
+                if (
+                        isinstance(attr.value, ast.Name) and attr.value.id == "request" and
+                        attr.attr in {"GET", "POST", "args", "form"}
+                ):
                     for target in node.targets:
-                        # We only mark simple variable names, not complex targets like tuples or lists
                         if isinstance(target, ast.Name):
-                            # Add the variable to the set of tainted variables
                             self.tainted_vars.add(target.id)
-                            # This variable now carries untrusted data from a source like input()
+                            # e.g., query = request.GET['q'] → query is tainted
 
         # Continue walking the AST for any child nodes
         self.generic_visit(node)
