@@ -43,7 +43,7 @@ class StaticAnalyzer(ast.NodeVisitor):
         self.sinks = {
             "eval", "exec", "os.system",
             "subprocess.call", "subprocess.Popen",
-            "open", "cursor.execute"
+            "cursor.execute"
         }
 
         # Set of variables marked as tainted (containing data coming from non-trusted sources)
@@ -149,6 +149,26 @@ class StaticAnalyzer(ast.NodeVisitor):
                 "function": func_name,
                 "line": node.lineno
             })
+
+        # Detect unsafe use of open() with tainted (user-controlled) file path
+        if func_name == "open":
+            # Check if at least one argument is passed to open()
+            if node.args:
+                arg0 = node.args[0]
+
+                # Check if the first argument (file path) is a variable name
+                if isinstance(arg0, ast.Name):
+                    # If that variable was previously marked as tainted (e.g. user = input())
+                    if arg0.id in self.tainted_vars:
+                        # Then this use of open() is potentially unsafe
+                        # because the path is user-controlled and could lead to:
+                        # - Arbitrary file read/write
+                        # - Path traversal attacks
+                        self.vulnerabilities.append({
+                            "type": "Tainted File Access (open)",
+                            "function": func_name,
+                            "line": node.lineno
+                        })
 
         # Check if the function consists in deserialization
         if func_name == "pickle.load":
