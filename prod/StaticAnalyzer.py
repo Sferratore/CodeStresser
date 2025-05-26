@@ -121,7 +121,7 @@ class StaticAnalyzer(ast.NodeVisitor):
 
     def visit_Assign(self, node: ast.Assign):
         value = node.value
-        
+
         for target in node.targets:
             if isinstance(target, ast.Name):
                 self.defined_vars.add(target.id)  # Track as initialized
@@ -221,6 +221,20 @@ class StaticAnalyzer(ast.NodeVisitor):
                             "sink": func_name,  # e.g., 'exec', 'os.system', 'eval'
                             "line": node.lineno  # line number of the call
                         })
+
+        self.generic_visit(node)
+
+    def visit_Name(self, node: ast.Name):
+        # We only care about variable usage (not assignment)
+        if isinstance(node.ctx, ast.Load):
+            # If the variable has not been defined and it's not tainted
+            if node.id not in self.defined_vars and node.id not in self.tainted_vars:
+                # Report a potential use-before-initialization
+                self.vulnerabilities.append({
+                    "type": "Use of Uninitialized Variable",
+                    "variable": node.id,
+                    "line": node.lineno
+                })
 
         self.generic_visit(node)
 
