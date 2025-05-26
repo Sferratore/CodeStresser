@@ -36,6 +36,9 @@ class StaticAnalyzer(ast.NodeVisitor):
         # List to store detected vulnerabilities
         self.vulnerabilities: List[Dict[str, Any]] = []
 
+        # Set of variables that have been assigned a value (to detect use-before-def)
+        self.defined_vars = set()
+
         # Sources that can introduce untrusted user input
         self.sources = {"input", "sys.argv", "os.environ", "request"}
 
