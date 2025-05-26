@@ -121,6 +121,10 @@ class StaticAnalyzer(ast.NodeVisitor):
 
     def visit_Assign(self, node: ast.Assign):
         value = node.value
+        
+        for target in node.targets:
+            if isinstance(target, ast.Name):
+                self.defined_vars.add(target.id)  # Track as initialized
 
         # Case 1: direct call like input()
         if isinstance(value, ast.Call):
