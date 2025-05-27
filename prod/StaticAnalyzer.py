@@ -15,7 +15,7 @@ from typing import List, Dict, Any
 #   Example: visiting a function call node → calls `visit_Call()`.
 #
 # - The `visit()` method dispatches automatically based on the node type,
-#   so you only need to implement logic in the `visit_*` methods you care about.
+#   so it's only needed to implement logic in the `visit_*` methods that need check.
 #
 # - This allows StaticAnalyzer to:
 #   - Identify dangerous patterns (e.g., use of `eval`, `exec`, dynamic SQL)
@@ -39,7 +39,8 @@ class StaticAnalyzer(ast.NodeVisitor):
         # Set of variables that have been assigned a value (to detect use-before-def)
         self.defined_vars = set()
 
-        # Dictionary of critical calls that are not handled by try block
+        # Dictionary of critical calls that are not handled by try block.
+        # Will contain function name as key and a list of occurrences (sink, line of code) as tuples  as values.
         self.critical_calls_outside_try = {}
 
         # Sources that can introduce untrusted user input
