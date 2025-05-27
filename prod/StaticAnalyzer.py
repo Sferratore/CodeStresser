@@ -103,11 +103,11 @@ class StaticAnalyzer(ast.NodeVisitor):
             })
 
     def visit_Try(self, node: ast.Try):
-        # Mark current function as having error handling
-        self.has_try[self.current_function] = True
+        old = self.in_try_block
         self.in_try_block = True
+        self.has_try[self.current_function] = True
         self.generic_visit(node)
-        self.in_try_block = False
+        self.in_try_block = old
 
     def visit_If(self, node: ast.If):
         # Increase depth of control structure and track max depth
