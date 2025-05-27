@@ -93,10 +93,21 @@ class StaticAnalyzer(ast.NodeVisitor):
             })
 
     def visit_Try(self, node: ast.Try):
+        # Save the current try-context flag so it can be restored later
         old = self.in_try_block
+
+        # We are now inside a try block — set the flag to True
         self.in_try_block = True
+
+        # Register that the current function has at least one try/except block
+        # This is used later to determine whether error handling exists
         self.has_try[self.current_function] = True
+
+        # Recursively visit all child nodes inside the try block
+        # This ensures that any dangerous calls made here will be marked as protected
         self.generic_visit(node)
+
+        # Restore the previous try-context flag after exiting the try block
         self.in_try_block = old
 
     def visit_If(self, node: ast.If):
