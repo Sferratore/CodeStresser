@@ -70,7 +70,7 @@ class StaticAnalyzer(ast.NodeVisitor):
 
         # Error handling flags
         self.in_try_block = False
-        self.has_try = {}  # function_name → bool
+        self.has_try = {}  
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         # Track the current function name and reset context
