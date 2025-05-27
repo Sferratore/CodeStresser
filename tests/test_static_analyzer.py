@@ -48,5 +48,26 @@ os.system(user)
         self.assertEqual(vector['dangerous_function_calls'], 1)
         self.assertEqual(vector['missing_error_handling'], 1)  # no try/except
 
+    class TestTryCatchProtection(unittest.TestCase):
+
+        def test_unprotected_dangerous_call_not_mitigated_by_random_try(self):
+            code = """
+    def f():
+        try:
+            print("not dangerous")
+        except:
+            pass
+        eval(input())  # should be detected as unprotected
+    """
+            analyzer = StaticAnalyzer()
+            results = analyzer.analyze(code)
+
+            # Check that eval is flagged as unprotected (since try block doesn't protect it)
+            self.assertTrue(any(
+                v['type'] == 'Unprotected Critical Function Call' and v['function'] == 'eval'
+                for v in results
+            ))
+
+
 if __name__ == '__main__':
     unittest.main()
