@@ -52,6 +52,11 @@ class StaticAnalyzer(ast.NodeVisitor):
             "cursor.execute"
         }
 
+        # Critical sinks that require try/except for runtime protection
+        self.critical_sinks_needing_try = {
+            "eval", "exec", "os.system", "subprocess.call", "subprocess.Popen"
+        }
+
         # Set of variables marked as tainted (containing data coming from non-trusted sources)
         self.tainted_vars = set()
 
