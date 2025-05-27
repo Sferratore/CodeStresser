@@ -39,6 +39,9 @@ class StaticAnalyzer(ast.NodeVisitor):
         # Set of variables that have been assigned a value (to detect use-before-def)
         self.defined_vars = set()
 
+        # Dictionary of critical calls that are not handled by try block
+        self.critical_calls_outside_try = {}
+
         # Sources that can introduce untrusted user input
         self.sources = {"input", "sys.argv", "os.environ", "request"}
 
