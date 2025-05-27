@@ -70,7 +70,7 @@ class StaticAnalyzer(ast.NodeVisitor):
 
         # Error handling flags
         self.in_try_block = False
-        self.has_try = {}  
+        self.has_try = {}
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         # Track the current function name and reset context
@@ -82,22 +82,6 @@ class StaticAnalyzer(ast.NodeVisitor):
 
         # Visit all inner nodes
         self.generic_visit(node)
-
-        unprotected = self.critical_calls_outside_try.get(node.name, [])
-        for func_name, line in unprotected:
-            self.vulnerabilities.append({
-                "type": "Unprotected Critical Function Call",
-                "function": func_name,
-                "line": line
-            })
-
-        # Fallback if no try at all and dangerous calls exist
-        if not self.has_try[node.name] and unprotected:
-            self.vulnerabilities.append({
-                "type": "Missing Error Handling",
-                "function": node.name,
-                "line": node.lineno
-            })
 
         # Check for excessive nesting (e.g., > 3 levels)
         if self.max_control_depth > 3:
