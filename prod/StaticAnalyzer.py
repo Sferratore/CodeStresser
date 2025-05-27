@@ -170,8 +170,20 @@ class StaticAnalyzer(ast.NodeVisitor):
         # Determine full name of the function being called (module.func)
         func_name = self.get_full_func_name(node.func)
 
-        # Check if the function is a known sink (dangerous call)
-        if func_name in self.sinks:
+        # --- Check for critical sink that requires try/except protection ---
+        if func_name in self.critical_sinks_needing_try:
+            if not self.in_try_block:
+                # Dangerous + unprotected: must be reported
+                self.vulnerabilities.append({
+                    "type": "Unprotected Critical Function Call",
+                    "function": func_name,
+                    "line": node.lineno
+                })
+            # If it's protected, we consider it OK and DO NOT log it at all
+
+        # --- Check for general dangerous calls that don't require try ---
+        elif func_name in self.sinks:
+            # These are always reported regardless of try/except
             self.vulnerabilities.append({
                 "type": "Dangerous Function Call",
                 "function": func_name,
