@@ -70,7 +70,6 @@ class StaticAnalyzer(ast.NodeVisitor):
 
         # Error handling flags
         self.in_try_block = False
-        self.has_try = {}
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         # Track the current function name and reset context
@@ -78,7 +77,7 @@ class StaticAnalyzer(ast.NodeVisitor):
         self.max_control_depth = 0
         self.control_depth = 0
         self.in_try_block = False
-        self.has_try[node.name] = False
+
 
         # Visit all inner nodes
         self.generic_visit(node)
@@ -98,10 +97,6 @@ class StaticAnalyzer(ast.NodeVisitor):
 
         # We are now inside a try block — set the flag to True
         self.in_try_block = True
-
-        # Register that the current function has at least one try/except block
-        # This is used later to determine whether error handling exists
-        self.has_try[self.current_function] = True
 
         # Recursively visit all child nodes inside the try block
         # This ensures that any dangerous calls made here will be marked as protected
