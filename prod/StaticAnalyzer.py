@@ -78,7 +78,6 @@ class StaticAnalyzer(ast.NodeVisitor):
         self.control_depth = 0
         self.in_try_block = False
 
-
         # Visit all inner nodes
         self.generic_visit(node)
 
@@ -129,16 +128,31 @@ class StaticAnalyzer(ast.NodeVisitor):
     def visit_Assign(self, node: ast.Assign):
         value = node.value
 
+        # Iterate over all targets on the left-hand side of the assignment
+        # For example, in `x = 1`, the target is `x`.
         for target in node.targets:
+            # We only track simple variable assignments (not tuples, lists, etc.)
             if isinstance(target, ast.Name):
-                self.defined_vars.add(target.id)  # Track as initialized
+                # Mark the variable as "defined"
+                # This allows us to detect later if a variable is used before being initialized
+                self.defined_vars.add(target.id)
 
-        # Case 1: direct call like input()
+        # === Case 1: direct call like input() ===
+
+        # Check if the right-hand side of the assignment is a function call
         if isinstance(value, ast.Call):
-            if isinstance(value.func, ast.Name) and value.func.id in self.sources:
-                for target in node.targets:
-                    if isinstance(target, ast.Name):
-                        self.tainted_vars.add(target.id)
+            # Check if the function being called is a simple (non-namespaced) function
+            # Example: input() → ast.Name(id="input")
+            if isinstance(value.func, ast.Name):
+                # Check if the function is one of the known untrusted sources (e.g., input, os.environ, request)
+                if value.func.id in self.sources:
+                    # For each target on the left-hand side of the assignment
+                    for target in node.targets:
+                        # We only handle simple variables (not tuples, object attributes, etc.)
+                        if isinstance(target, ast.Name):
+                            # Mark this variable as "tainted", meaning it contains data from an untrusted source
+                            # This is used later for taint analysis (e.g., if this variable flows into a sink)
+                            self.tainted_vars.add(target.id)
 
         # Case 2: request.GET[...] or request.POST[...]
         elif isinstance(value, ast.Subscript):
@@ -154,7 +168,6 @@ class StaticAnalyzer(ast.NodeVisitor):
                             self.tainted_vars.add(target.id)
                             # e.g., query = request.GET['q'] → query is tainted
 
-        # Continue walking the AST for any child nodes
         self.generic_visit(node)
 
     def visit_Call(self, node: ast.Call):
