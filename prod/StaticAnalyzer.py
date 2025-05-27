@@ -155,18 +155,23 @@ class StaticAnalyzer(ast.NodeVisitor):
                             self.tainted_vars.add(target.id)
 
         # Case 2: request.GET[...] or request.POST[...]
-        elif isinstance(value, ast.Subscript):
+        elif isinstance(value, ast.Subscript): # ast.Subscript represent access to value using index or key
             # Check if it's something like: request.GET[...] or request.POST[...]
-            if isinstance(value.value, ast.Attribute):
+            if isinstance(value.value, ast.Attribute): # ast.Attribute checks access to attribute or propriety
                 attr = value.value
+                # Ensure the base object of the attribute is 'request' (i.e., attr.value.id == "request")
+                # and the accessed attribute is one of the known user input sources
                 if (
                         isinstance(attr.value, ast.Name) and attr.value.id == "request" and
-                        attr.attr in {"GET", "POST", "args", "form"}
+                        attr.attr in {"GET", "POST", "args", "form"}  # These are common user input dictionaries
                 ):
+                    # Now we are confident this is something like: request.GET['x']
+                    # We iterate over all variables being assigned on the left-hand side
                     for target in node.targets:
                         if isinstance(target, ast.Name):
+                            # Mark the target variable as tainted — it holds user-supplied data
                             self.tainted_vars.add(target.id)
-                            # e.g., query = request.GET['q'] → query is tainted
+                            # Example: query = request.GET['q'] → 'query' is now tracked as tainted
 
         self.generic_visit(node)
 
