@@ -77,8 +77,16 @@ class StaticAnalyzer(ast.NodeVisitor):
         # Visit all inner nodes
         self.generic_visit(node)
 
-        # Check if error handling (try/except) is missing
-        if not self.has_try[node.name]:
+        unprotected = self.critical_calls_outside_try.get(node.name, [])
+        for func_name, line in unprotected:
+            self.vulnerabilities.append({
+                "type": "Unprotected Critical Function Call",
+                "function": func_name,
+                "line": line
+            })
+
+        # Fallback if no try at all and dangerous calls exist
+        if not self.has_try[node.name] and unprotected:
             self.vulnerabilities.append({
                 "type": "Missing Error Handling",
                 "function": node.name,
