@@ -203,7 +203,6 @@ class StaticAnalyzer(ast.NodeVisitor):
             # Check if at least one argument is passed to open()
             if node.args:
                 arg0 = node.args[0]
-
                 # Check if the first argument (file path) is a variable name
                 if isinstance(arg0, ast.Name):
                     # If that variable was previously marked as tainted (e.g. user = input())
@@ -226,13 +225,13 @@ class StaticAnalyzer(ast.NodeVisitor):
                 "line": node.lineno
             })
 
-            # Check if the function risks buffer overflow
-            if func_name == "strcpy":
-                self.vulnerabilities.append({
-                    "type": "Copy without length control, Buffer Overflow risk",
-                    "function": func_name,
-                    "line": node.lineno
-                })
+        # Check if the function risks buffer overflow
+        if func_name == "strcpy":
+            self.vulnerabilities.append({
+                "type": "Copy without length control, Buffer Overflow risk",
+                "function": func_name,
+                "line": node.lineno
+            })
 
         # Detect dynamic SQL queries constructed via string ops
         if func_name == "cursor.execute":
