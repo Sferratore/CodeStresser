@@ -260,7 +260,7 @@ class StaticAnalyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Name(self, node: ast.Name):
-        # We only care about variable usage and we check if it is used in read (parameter..ecc)
+        # We only care about variable usage, and we check if it is used in read (parameter...ecc)
         if isinstance(node.ctx, ast.Load):
             # If the variable has not been defined and it's not tainted
             if node.id not in self.defined_vars and node.id not in self.tainted_vars:
