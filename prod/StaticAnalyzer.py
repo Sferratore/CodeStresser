@@ -176,7 +176,7 @@ class StaticAnalyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Call(self, node: ast.Call):
-        # Determine full name of the function being called (module.func)
+        # Determine full name of the function being called
         func_name = self.get_full_func_name(node.func)
 
         # --- Check for critical sink that requires try/except protection ---
