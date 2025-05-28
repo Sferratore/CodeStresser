@@ -188,7 +188,6 @@ class StaticAnalyzer(ast.NodeVisitor):
                     "function": func_name,
                     "line": node.lineno
                 })
-            # If it's protected, we consider it OK and DO NOT log it at all
 
         # --- Check for general dangerous calls that don't require try ---
         elif func_name in self.sinks:
