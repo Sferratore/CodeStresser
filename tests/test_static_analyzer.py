@@ -80,8 +80,6 @@ os.system(user)
         self.assertNotIn({'type': 'Unprotected Critical Function Call', 'function': 'eval', 'line': 11},
                              vulnerabilities)
 
-    class TestTryCatchProtection(unittest.TestCase):
-
         def test_unprotected_dangerous_call_not_mitigated_by_random_try(self):
             code = """
     def f():
