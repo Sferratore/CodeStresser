@@ -80,23 +80,22 @@ os.system(user)
         self.assertNotIn({'type': 'Unprotected Critical Function Call', 'function': 'eval', 'line': 11},
                              vulnerabilities)
 
-        def test_unprotected_dangerous_call_not_mitigated_by_random_try(self):
-            code = """
-    def f():
-        try:
-            print("not dangerous")
-        except:
-            pass
-        eval(input())  # should be detected as unprotected
-    """
-            analyzer = StaticAnalyzer()
-            results = analyzer.analyze(code)
+    def test_unprotected_dangerous_call_not_mitigated_by_try(self):
+        code = """
+            def f():
+                try:
+                    print("not dangerous")
+                except:
+                    pass
+                eval(input())  # should be detected as unprotected
+        """
+        analyzer = StaticAnalyzer()
+        results = analyzer.analyze(code)
 
-            # Check that eval is flagged as unprotected (since try block doesn't protect it)
-            self.assertTrue(any(
-                v['type'] == 'Unprotected Critical Function Call' and v['function'] == 'eval'
-                for v in results
-            ))
+        # Check that eval is flagged as unprotected (since try block doesn't protect it)
+        self.assertTrue(any(
+            v['type'] == 'Unprotected Critical Function Call' and v['function'] == 'eval'
+            for v in results))
 
 
 if __name__ == '__main__':
