@@ -46,7 +46,39 @@ os.system(user)
         vulns = analyzer.analyze(code)
         vector = generate_feature_vector(vulns)
         self.assertEqual(vector['dangerous_function_calls'], 1)
-        self.assertEqual(vector['missing_error_handling'], 1)  # no try/except
+        self.assertEqual(vector['missing_error_handling'], 1)
+
+    def test_vulnerable_code(self):
+        # Esempio di codice con vulnerabilità
+        code = """
+    def unsafe():
+        user_input = input()
+        eval(user_input)
+
+    def sql_example():
+        query = "SELECT * FROM users WHERE name = '" + input() + "'"
+        cursor.execute(query)
+
+    def safe():
+        try:
+            eval("2+2")
+        except:
+            print("Error")
+    """
+            analyzer = StaticAnalyzer()
+            vulnerabilities = analyzer.analyze(code)
+
+            # Estrai i tipi di vulnerabilità rilevati
+            vuln_types = [v["type"] for v in vulnerabilities]
+
+            # Controlli attesi
+            self.assertIn("Tainted Data Flow to Dangerous Sink", vuln_types)
+            self.assertIn("Dangerous Function Call", vuln_types)
+            self.assertIn("Dynamic SQL Query", vuln_types)
+
+            # Verifica che non venga segnalata vulnerabilità nella funzione safe
+            self.assertNotIn({'type': 'Unprotected Critical Function Call', 'function': 'eval', 'line': 11},
+                             vulnerabilities)
 
     class TestTryCatchProtection(unittest.TestCase):
 
