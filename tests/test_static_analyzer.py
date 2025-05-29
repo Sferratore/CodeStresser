@@ -13,7 +13,10 @@ class TestStaticAnalyzer(unittest.TestCase):
         self.assertTrue(any(v['type'] == 'Dangerous Function Call' for v in results))
 
     def test_sql_injection_detection(self):
-        code = "cursor.execute('SELECT * FROM users WHERE name = ' + name)"
+        code = """
+name = input()
+cursor.execute('SELECT * FROM users WHERE name = ' + name)
+        """
         results = self.analyze(code)
         self.assertTrue(any(v['type'] == 'Dynamic SQL Query' for v in results))
 

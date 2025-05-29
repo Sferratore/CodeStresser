@@ -230,8 +230,8 @@ class StaticAnalyzer(ast.NodeVisitor):
         if isinstance(node.func, ast.Attribute) and node.func.attr == "execute":
             if node.args:
                 sql_arg = node.args[0]
-                # Case 1: inline dynamic SQL construction (e.g., "SELECT..." + input())
-                if isinstance(sql_arg, (ast.BinOp, ast.JoinedStr)):
+                # Case 1: inline dynamic SQL construction containing a tainted-something (e.g., "SELECT..." + input())
+                if isinstance(sql_arg, (ast.BinOp, ast.JoinedStr)) and is_tainted_expr(sql_arg, self.tainted_vars, self.sources):
                     self.vulnerabilities.append({
                         "type": "Dynamic SQL Query",
                         "line": node.lineno
