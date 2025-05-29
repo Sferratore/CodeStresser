@@ -19,11 +19,11 @@ class TestStaticAnalyzer(unittest.TestCase):
 
     def test_taint_flow(self):
         code = """
-            user = input()
-            os.system(user)
-        """
+user = input()
+os.system(user)
+"""
         results = self.analyze(code)
-        self.assertTrue(any(v['type'] == 'Tainted Data Flow to Dangerous Sink' for v in results))
+        self.assertTrue(any(v.get('type') == 'Tainted Data Flow to Dangerous Sink' for v in results))
 
     def test_missing_error_handling(self):
         code = "def risky():\n  return 1 / 0"
