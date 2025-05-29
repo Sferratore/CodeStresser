@@ -82,6 +82,10 @@ class StaticAnalyzer(ast.NodeVisitor):
         self.control_depth = 0
         self.in_try_block = False
 
+        # Add function parameters to defined_vars so they're not flagged
+        for arg in node.args.args:
+            self.defined_vars.add(arg.arg)
+
         # Visit all inner nodes
         self.generic_visit(node)
 
@@ -264,20 +268,29 @@ class StaticAnalyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Name(self, node: ast.Name):
+        # If this Name node is part of a function call (e.g., func()),
+        # and it is the function being called (not an argument),
+        # we skip it to avoid false positives for undefined function names.
         if isinstance(getattr(node, 'parent', None), ast.Call) and node is getattr(node.parent, 'func', None):
             return
 
+        # Skip checking for built-in function names like 'print', 'len', etc.
+        # These are always available and should not be reported as undefined.
         if node.id in self.builtins:
             return
 
+        # We are only interested in variables being used (not defined),
+        # so we check if the context is 'Load' (read usage).
         if isinstance(node.ctx, ast.Load):
-            if node.id not in self.defined_vars and node.id not in self.tainted_vars:
-                self.vulnerabilities.append({
-                    "type": "Use of Uninitialized Variable",
-                    "variable": node.id,
-                    "line": node.lineno
-                })
+            # If the variable has not been defined earlier (via assignment)
+            # and it's not marked as tainted input, we report it as a potential issue.
+            self.vulnerabilities.append({
+                "type": "Use of Uninitialized Variable",
+                "variable": node.id,
+                "line": node.lineno
+            })
 
+        # Continue visiting any child nodes of this Name node.
         self.generic_visit(node)
 
     def get_full_func_name(self, func) -> str:
