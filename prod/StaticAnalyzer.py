@@ -344,7 +344,7 @@ def generate_feature_vector(vulnerabilities: List[Dict[str, Any]]) -> Dict[str, 
             feature_vector["dynamic_sql_queries"] += 1
         elif vtype == "Tainted Data Flow to Dangerous Sink":
             feature_vector["tainted_flows"] += 1
-        elif vtype == "Missing Error Handling":
+        elif vtype == "Missing Error Handling" or vtype == "Unprotected Critical Function Call":
             feature_vector["missing_error_handling"] += 1
         elif vtype == "Excessive Control Structure Nesting":
             feature_vector["deep_control_nesting"] += 1
