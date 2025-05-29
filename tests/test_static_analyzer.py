@@ -19,9 +19,9 @@ class TestStaticAnalyzer(unittest.TestCase):
 
     def test_taint_flow(self):
         code = """
-user = input()
-os.system(user)
-"""
+            user = input()
+            os.system(user)
+        """
         results = self.analyze(code)
         self.assertTrue(any(v['type'] == 'Tainted Data Flow to Dangerous Sink' for v in results))
 
