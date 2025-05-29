@@ -89,6 +89,16 @@ def safe():
             v['type'] == 'Unprotected Critical Function Call' and v['function'] == 'eval'
             for v in results))
 
+    def test_indirect_tainted_var(self):
+        code = """
+query = "SELECT * FROM users WHERE name = '" + input() + "'" 
+cursor.execute(query)
+"""
+        analyzer = StaticAnalyzer()
+        vulnerabilities = analyzer.analyze(code)
+
+        vuln_types = [v["type"] for v in vulnerabilities]
+        self.assertIn("Dynamic SQL Query", vuln_types)
 
 if __name__ == '__main__':
     unittest.main()

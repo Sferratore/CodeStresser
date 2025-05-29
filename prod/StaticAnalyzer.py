@@ -161,7 +161,7 @@ class StaticAnalyzer(ast.NodeVisitor):
                             self.tainted_vars.add(target.id)
 
         # === Case 3: assignment uses tainted variable (e.g., query = "..." + user_input) ===
-        elif is_tainted_expr(value, self.tainted_vars):
+        elif is_tainted_expr(value, self.tainted_vars, self.sources):
             for target in node.targets:
                 if isinstance(target, ast.Name):
                     self.tainted_vars.add(target.id)
@@ -353,7 +353,7 @@ def generate_feature_vector(vulnerabilities: List[Dict[str, Any]]) -> Dict[str, 
 
     return feature_vector
 
-def is_tainted_expr(expr, tainted_vars):
+def is_tainted_expr(expr, tainted_vars, vulnerable_sources):
     # Case 1: The expression is a variable (Name node)
     # We return True if the variable is in the set of tainted variables
     if isinstance(expr, ast.Name):
@@ -363,13 +363,13 @@ def is_tainted_expr(expr, tainted_vars):
     # We recursively check both the left and right operands.
     # If either side is tainted, the result is considered tainted.
     elif isinstance(expr, ast.BinOp):
-        return is_tainted_expr(expr.left, tainted_vars) or is_tainted_expr(expr.right, tainted_vars)
+        return is_tainted_expr(expr.left, tainted_vars, vulnerable_sources) or is_tainted_expr(expr.right, tainted_vars, vulnerable_sources)
 
     # Case 3: The expression is a function call (e.g., input())
     # We treat direct calls to certain known input functions as tainted.
     elif isinstance(expr, ast.Call):
         if isinstance(expr.func, ast.Name):
-            return expr.func.id in {"input"}  # Extend this set if needed
+            return expr.func.id in vulnerable_sources  # Extend this set if needed
 
     # Case 4: The expression is a formatted string (f-string)
     # JoinedStr contains a list of values; if any of them are tainted, the whole string is tainted
