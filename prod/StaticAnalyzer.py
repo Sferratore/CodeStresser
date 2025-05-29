@@ -1,4 +1,5 @@
 import ast
+import builtins
 from typing import List, Dict, Any
 
 # ==============================================================================
@@ -70,6 +71,9 @@ class StaticAnalyzer(ast.NodeVisitor):
 
         # Error handling flags
         self.in_try_block = False
+
+        # List of builtin names of calls/functions (print...ecc.)
+        self.builtins = set(dir(builtins))
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         # Track the current function name and reset context
@@ -260,11 +264,12 @@ class StaticAnalyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Name(self, node: ast.Name):
-        # Skip if the name is used as the function in a call, e.g. func() → don't check 'func'
         if isinstance(getattr(node, 'parent', None), ast.Call) and node is getattr(node.parent, 'func', None):
             return
 
-        # We only care about variable usage (not assignment)
+        if node.id in self.builtins:
+            return
+
         if isinstance(node.ctx, ast.Load):
             if node.id not in self.defined_vars and node.id not in self.tainted_vars:
                 self.vulnerabilities.append({
