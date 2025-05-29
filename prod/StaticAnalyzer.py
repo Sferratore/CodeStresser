@@ -243,7 +243,15 @@ class StaticAnalyzer(ast.NodeVisitor):
 
         # Detect dynamic SQL queries: any call to .execute with string concat or f-string
         if isinstance(node.func, ast.Attribute) and node.func.attr == "execute":
-            if node.args and isinstance(node.args[0], (ast.BinOp, ast.JoinedStr)):
+            # Case 1: direct use of dynamic string (e.g. "SELECT ..." + user_input)
+            if isinstance(node.args[0], (ast.BinOp, ast.JoinedStr)):
+                self.vulnerabilities.append({
+                    "type": "Dynamic SQL Query",
+                    "line": node.lineno
+                })
+
+            # Case 2: variable used, check if it's tainted (e.g. cursor.execute(query))
+            elif isinstance(node.args[0], ast.Name) and node.args[0].id in self.tainted_vars:
                 self.vulnerabilities.append({
                     "type": "Dynamic SQL Query",
                     "line": node.lineno
