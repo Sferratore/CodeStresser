@@ -329,19 +329,32 @@ def generate_feature_vector(vulnerabilities: List[Dict[str, Any]]) -> Dict[str, 
         "dynamic_sql_queries": 0,
         "tainted_flows": 0,
         "missing_error_handling": 0,
-        "deep_control_nesting": 0
+        "deep_control_nesting": 0,
+        "uninitialized_variable_usage": 0,
+        "tainted_file_access": 0,
+        "unsafe_deserialization": 0,
+        "buffer_overflow_risk": 0
     }
 
     for vuln in vulnerabilities:
-        if vuln["type"] == "Dangerous Function Call":
+        vtype = vuln.get("type")
+        if vtype == "Dangerous Function Call":
             feature_vector["dangerous_function_calls"] += 1
-        elif vuln["type"] == "Dynamic SQL Query":
+        elif vtype == "Dynamic SQL Query":
             feature_vector["dynamic_sql_queries"] += 1
-        elif vuln["type"] == "Tainted Data Flow to Dangerous Sink":
+        elif vtype == "Tainted Data Flow to Dangerous Sink":
             feature_vector["tainted_flows"] += 1
-        elif vuln["type"] == "Missing Error Handling":
+        elif vtype == "Missing Error Handling":
             feature_vector["missing_error_handling"] += 1
-        elif vuln["type"] == "Excessive Control Structure Nesting":
+        elif vtype == "Excessive Control Structure Nesting":
             feature_vector["deep_control_nesting"] += 1
+        elif vtype == "Use of Uninitialized Variable":
+            feature_vector["uninitialized_variable_usage"] += 1
+        elif vtype == "Tainted File Access (open)":
+            feature_vector["tainted_file_access"] += 1
+        elif vtype == "Unsafe Deserialization":
+            feature_vector["unsafe_deserialization"] += 1
+        elif vtype == "Copy without length control, Buffer Overflow risk":
+            feature_vector["buffer_overflow_risk"] += 1
 
     return feature_vector
