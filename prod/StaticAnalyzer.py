@@ -260,11 +260,13 @@ class StaticAnalyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Name(self, node: ast.Name):
-        # We only care about variable usage, and we check if it is used in read (parameter...ecc)
+        # Skip if the name is used as the function in a call, e.g. func() → don't check 'func'
+        if isinstance(getattr(node, 'parent', None), ast.Call) and node is getattr(node.parent, 'func', None):
+            return
+
+        # We only care about variable usage (not assignment)
         if isinstance(node.ctx, ast.Load):
-            # If the variable has not been defined and it's not tainted
             if node.id not in self.defined_vars and node.id not in self.tainted_vars:
-                # Report a potential use-before-initialization
                 self.vulnerabilities.append({
                     "type": "Use of Uninitialized Variable",
                     "variable": node.id,
