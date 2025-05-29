@@ -241,21 +241,22 @@ class StaticAnalyzer(ast.NodeVisitor):
                 "line": node.lineno
             })
 
-        # Detect dynamic SQL queries: any call to .execute with string concat or f-string
+        # --- Dynamic SQL Detection ---
         if isinstance(node.func, ast.Attribute) and node.func.attr == "execute":
-            # Case 1: direct use of dynamic string (e.g. "SELECT ..." + user_input)
-            if isinstance(node.args[0], (ast.BinOp, ast.JoinedStr)):
-                self.vulnerabilities.append({
-                    "type": "Dynamic SQL Query",
-                    "line": node.lineno
-                })
-
-            # Case 2: variable used, check if it's tainted (e.g. cursor.execute(query))
-            elif isinstance(node.args[0], ast.Name) and node.args[0].id in self.tainted_vars:
-                self.vulnerabilities.append({
-                    "type": "Dynamic SQL Query",
-                    "line": node.lineno
-                })
+            if node.args:
+                sql_arg = node.args[0]
+                # Case 1: inline dynamic SQL construction (e.g., "SELECT..." + input())
+                if isinstance(sql_arg, (ast.BinOp, ast.JoinedStr)):
+                    self.vulnerabilities.append({
+                        "type": "Dynamic SQL Query",
+                        "line": node.lineno
+                    })
+                # Case 2: variable passed as query and is tainted
+                elif isinstance(sql_arg, ast.Name) and sql_arg.id in self.tainted_vars:
+                    self.vulnerabilities.append({
+                        "type": "Dynamic SQL Query",
+                        "line": node.lineno
+                    })
 
         # Check for tainted arguments passed to dangerous sinks
         for arg in node.args:
