@@ -64,6 +64,7 @@ def safe():
 
         vuln_types = [v["type"] for v in vulnerabilities]
 
+        self.assertIn("Unprotected Critical Function Call", vuln_types)
         self.assertIn("Tainted Data Flow to Dangerous Sink", vuln_types)
         self.assertIn("Dangerous Function Call", vuln_types)
         self.assertIn("Dynamic SQL Query", vuln_types)
