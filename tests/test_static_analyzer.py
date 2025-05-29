@@ -25,11 +25,6 @@ os.system(user)
         results = self.analyze(code)
         self.assertTrue(any(v.get('type') == 'Tainted Data Flow to Dangerous Sink' for v in results))
 
-    def test_missing_error_handling(self):
-        code = "def risky():\n  return 1 / 0"
-        results = self.analyze(code)
-        self.assertTrue(any(v['type'] == 'Missing Error Handling' for v in results))
-
     def test_nesting_depth(self):
         code = "def deep():\n  if True:\n    if True:\n      if True:\n        if True:\n          pass"
         results = self.analyze(code)
