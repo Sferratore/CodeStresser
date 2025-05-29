@@ -268,9 +268,18 @@ class StaticAnalyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Name(self, node: ast.Name):
-        # If this Name node is part of a function call (e.g., func()),
-        # and it is the function being called (not an argument),
-        # we skip it to avoid false positives for undefined function names.
+        # If this 'Name' node is part of a function call expression,
+        # for example: print("hello") → 'print' is a Name inside a Call node.
+        # We check two things:
+        # 1. The parent node must be of type 'ast.Call'.
+        # 2. This node must be the one being called — that is, it must be the 'func' field of the Call.
+        #    (not an argument like 'x' in foo(x), but the function name itself: 'foo')
+        #
+        # This is important because we don't want to falsely report built-in or user-defined functions
+        # like 'print', 'len', 'my_function' as uninitialized variables.
+        #
+        # So if this node is being used as a function call (not a variable read),
+        # we skip it from the uninitialized variable check.
         if isinstance(getattr(node, 'parent', None), ast.Call) and node is getattr(node.parent, 'func', None):
             return
 
