@@ -190,7 +190,7 @@ class StaticAnalyzer(ast.NodeVisitor):
                 })
 
         # --- Check for general dangerous calls that don't require try ---
-        elif func_name in self.sinks:
+        if func_name in self.sinks:
             # These are always reported regardless of try/except
             self.vulnerabilities.append({
                 "type": "Dangerous Function Call",
