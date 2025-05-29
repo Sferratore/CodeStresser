@@ -44,7 +44,6 @@ os.system(user)
         self.assertEqual(vector['missing_error_handling'], 1)
 
     def test_vulnerable_code(self):
-        # Esempio di codice con vulnerabilità
         code = """
             def unsafe():
                 user_input = input()
@@ -63,15 +62,12 @@ os.system(user)
         analyzer = StaticAnalyzer()
         vulnerabilities = analyzer.analyze(code)
 
-        # Estrai i tipi di vulnerabilità rilevati
         vuln_types = [v["type"] for v in vulnerabilities]
 
-        # Controlli attesi
         self.assertIn("Tainted Data Flow to Dangerous Sink", vuln_types)
         self.assertIn("Dangerous Function Call", vuln_types)
         self.assertIn("Dynamic SQL Query", vuln_types)
 
-        # Verifica che non venga segnalata vulnerabilità nella funzione safe
         self.assertNotIn({'type': 'Unprotected Critical Function Call', 'function': 'eval', 'line': 11},
                              vulnerabilities)
 
