@@ -271,22 +271,6 @@ class StaticAnalyzer(ast.NodeVisitor):
                         "line": node.lineno
                     })
 
-        # Check for tainted arguments passed to dangerous sinks
-        for arg in node.args:
-            # We are only interested in arguments that are variable names (e.g., exec(user_input))
-            if isinstance(arg, ast.Name):
-                # Check if this variable has been marked as tainted (from input, os.environ, etc.)
-                if arg.id in self.tainted_vars:
-                    # If the function receiving this tainted variable is a known dangerous sink
-                    if func_name in self.sinks:
-                        # Then this represents a potential vulnerability:
-                        # user-controlled data is flowing into a critical operation
-                        self.vulnerabilities.append({
-                            "type": "Tainted Data Flow to Dangerous Sink",
-                            "sink": func_name,  # e.g., 'exec', 'os.system', 'eval'
-                            "line": node.lineno  # line number of the call
-                        })
-
         self.generic_visit(node)
 
     def visit_Name(self, node: ast.Name):
