@@ -25,14 +25,14 @@ cursor.execute('SELECT * FROM users WHERE name = ' + name)
         """
         results = self.analyze(code)
         self.assertEqual(len(results), 4)
-        self.assertEqual(results[0]['type'], 'Dangerous Function Call')
-        self.assertEqual(results[0]['line'], 2)
+        self.assertEqual(results[0]['type'], 'Generally Dangerous Function Call')
+        self.assertEqual(results[0]['line'], 3)
         self.assertEqual(results[1]['type'], 'Dangerous Function Call: Critical Sink Needing Try')
-        self.assertEqual(results[1]['line'], 2)
+        self.assertEqual(results[1]['line'], 3)
         self.assertEqual(results[2]['type'], 'Dangerous Function Call: Tainted Parameter Source')
-        self.assertEqual(results[2]['line'], 2)
+        self.assertEqual(results[2]['line'], 3)
         self.assertEqual(results[3]['type'], 'Dangerous Dynamic SQL Query')
-        self.assertEqual(results[3]['line'], 2)
+        self.assertEqual(results[3]['line'], 3)
 
     def test_taint_flow(self):
         code = """
