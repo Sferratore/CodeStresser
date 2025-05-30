@@ -51,7 +51,8 @@ os.system(user)
     def test_nesting_depth(self):
         code = "def deep():\n  if True:\n    if True:\n      if True:\n        if True:\n          pass"
         results = self.analyze(code)
-        self.assertTrue(any(v['type'] == 'Excessive Control Structure Nesting' for v in results))
+        self.assertEqual(results[0]['type'], 'Excessive Control Structure Nesting')
+        self.assertEqual(results[0]['line'], 1)
 
     def test_clean_code(self):
         code = "def safe():\n  try:\n    print('ok')\n  except: pass"
