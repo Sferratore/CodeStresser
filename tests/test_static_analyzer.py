@@ -10,11 +10,13 @@ class TestStaticAnalyzer(unittest.TestCase):
     def test_eval_detection(self):
         code = "eval(input())"
         results = self.analyze(code)
-        self.assertEqual(len(results), 2)
-        self.assertEqual(results[0]['type'], 'Unprotected Critical Function Call')
+        self.assertEqual(len(results), 3)
+        self.assertEqual(results[0]['type'], 'Generally Dangerous Function Call')
         self.assertEqual(results[0]['line'], 1)
-        self.assertEqual(results[1]['type'], 'Dangerous Function Call')
+        self.assertEqual(results[1]['type'], 'Dangerous Function Call: Critical Sink Needing Try')
         self.assertEqual(results[1]['line'], 1)
+        self.assertEqual(results[2]['type'], 'Dangerous Function Call: Tainted Parameter Source')
+        self.assertEqual(results[2]['line'], 1)
 
     def test_sql_injection_detection(self):
         code = """

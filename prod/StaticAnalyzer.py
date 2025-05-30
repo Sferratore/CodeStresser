@@ -172,24 +172,44 @@ class StaticAnalyzer(ast.NodeVisitor):
         # Determine full name of the function being called
         func_name = self.get_full_func_name(node.func)
 
+
+        # --- Check for general dangerous calls ---
+        if func_name in self.sinks:
+            # These are always reported regardless of try/except
+            self.vulnerabilities.append({
+                "type": "Generally Dangerous Function Call",
+                "function": func_name,
+                "line": node.lineno
+            })
+
         # --- Check for critical sink that requires try/except protection ---
         if func_name in self.critical_sinks_needing_try:
             if not self.in_try_block:
                 # Dangerous + unprotected: must be reported
                 self.vulnerabilities.append({
-                    "type": "Unprotected Critical Function Call",
+                    "type": "Dangerous Function Call: Critical Sink Needing Try",
                     "function": func_name,
                     "line": node.lineno
                 })
 
-        # --- Check for general dangerous calls that don't require try ---
+        # --- Check for tainted input passed to dangerous function call ---
         if func_name in self.sinks:
-            # These are always reported regardless of try/except
-            self.vulnerabilities.append({
-                "type": "Dangerous Function Call",
-                "function": func_name,
-                "line": node.lineno
-            })
+            for arg in node.args:
+                # Case 1: direct call to a source like input()
+                if isinstance(arg, ast.Call) and isinstance(arg.func, ast.Name) and arg.func.id in self.sources:
+                    self.vulnerabilities.append({
+                        "type": "Dangerous Function Call: Tainted Parameter Source",
+                        "sink": func_name,
+                        "line": node.lineno
+                    })
+
+                # Case 2: variable that is tainted
+                elif isinstance(arg, ast.Name) and arg.id in self.tainted_vars:
+                    self.vulnerabilities.append({
+                        "type": "Tainted Input in Dangerous Function Call",
+                        "sink": func_name,
+                        "line": node.lineno
+                    })
 
         # Detect unsafe use of open() with tainted (user-controlled) file path
         if func_name == "open":
