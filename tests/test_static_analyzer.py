@@ -61,11 +61,11 @@ os.system(user)
 
     def test_feature_vector_output(self):
         code = "def f():\n eval(input())"
-        analyzer = StaticAnalyzer()
-        vulns = analyzer.analyze(code)
+        vulns = self.analyze(code)
         vector = generate_feature_vector(vulns)
-        self.assertEqual(vector['dangerous_function_calls'], 1)
-        self.assertEqual(vector['missing_error_handling'], 1)
+        self.assertEqual(vector['generally_dangerous_calls'], 1)
+        self.assertEqual(vector['unprotected_critical_calls'], 1)
+        self.assertEqual(vector['tainted_input_in_dangerous_calls'], 1)
 
     def test_vulnerable_code(self):
         code = """
