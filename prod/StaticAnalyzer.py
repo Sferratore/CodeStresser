@@ -56,7 +56,7 @@ class StaticAnalyzer(ast.NodeVisitor):
 
         # Critical sinks that require try/except for runtime protection
         self.critical_sinks_needing_try = {
-            "eval", "exec", "os.system", "subprocess.call", "subprocess.Popen"
+            "eval", "exec", "os.system", "subprocess.call", "subprocess.Popen", "cursor.execute"
         }
 
         # Set of variables marked as tainted (containing data coming from non-trusted sources)
@@ -206,7 +206,15 @@ class StaticAnalyzer(ast.NodeVisitor):
                 # Case 2: variable that is tainted
                 elif isinstance(arg, ast.Name) and arg.id in self.tainted_vars:
                     self.vulnerabilities.append({
-                        "type": "Tainted Input in Dangerous Function Call",
+                        "type": "Dangerous Function Call: Tainted Parameter Source",
+                        "sink": func_name,
+                        "line": node.lineno
+                    })
+
+                # Case 3: expression composed with tainted input (e.g., "SELECT " + user_input)
+                elif isinstance(arg, (ast.BinOp, ast.JoinedStr)) and is_tainted_expr(arg, self.tainted_vars, self.sources):
+                    self.vulnerabilities.append({
+                        "type": "Dangerous Function Call: Tainted Parameter Source",
                         "sink": func_name,
                         "line": node.lineno
                     })
@@ -253,13 +261,13 @@ class StaticAnalyzer(ast.NodeVisitor):
                 # Case 1: inline dynamic SQL construction containing a tainted-something (e.g., "SELECT..." + input())
                 if isinstance(sql_arg, (ast.BinOp, ast.JoinedStr)) and is_tainted_expr(sql_arg, self.tainted_vars, self.sources):
                     self.vulnerabilities.append({
-                        "type": "Dynamic SQL Query",
+                        "type": "Dangerous Dynamic SQL Query",
                         "line": node.lineno
                     })
                 # Case 2: variable passed as query and is tainted
                 elif isinstance(sql_arg, ast.Name) and sql_arg.id in self.tainted_vars:
                     self.vulnerabilities.append({
-                        "type": "Dynamic SQL Query",
+                        "type": "Dangerous Dynamic SQL Query",
                         "line": node.lineno
                     })
 
@@ -304,14 +312,14 @@ class StaticAnalyzer(ast.NodeVisitor):
 
         # We are only interested in variables being used (not defined),
         # so we check if the context is 'Load' (read usage).
-        if isinstance(node.ctx, ast.Load):
+        #if isinstance(node.ctx, ast.Load):
             # If the variable has not been defined earlier (via assignment)
             # and it's not marked as tainted input, we report it as a potential issue.
-            self.vulnerabilities.append({
-                "type": "Use of Uninitialized Variable",
-                "variable": node.id,
-                "line": node.lineno
-            })
+            # self.vulnerabilities.append({
+                #"type": "Use of Uninitialized Variable",
+                #"variable": node.id,
+                #"line": node.lineno
+            #})
 
         # Continue visiting any child nodes of this Name node.
         self.generic_visit(node)
@@ -339,8 +347,11 @@ def generate_feature_vector(vulnerabilities: List[Dict[str, Any]]) -> Dict[str, 
     Generate a summary of vulnerability counts as feature vector.
     """
     feature_vector = {
-        "dangerous_function_calls": 0,
-        "dynamic_sql_queries": 0,
+        "generally_dangerous_calls": 0,
+        "unprotected_critical_calls": 0,
+        "tainted_input_in_dangerous_calls": 0,
+        "tainted_param_source_calls": 0,
+        "dangerous_dynamic_sql": 0,
         "tainted_flows": 0,
         "missing_error_handling": 0,
         "deep_control_nesting": 0,
@@ -352,13 +363,19 @@ def generate_feature_vector(vulnerabilities: List[Dict[str, Any]]) -> Dict[str, 
 
     for vuln in vulnerabilities:
         vtype = vuln.get("type")
-        if vtype == "Dangerous Function Call":
-            feature_vector["dangerous_function_calls"] += 1
-        elif vtype == "Dynamic SQL Query":
-            feature_vector["dynamic_sql_queries"] += 1
+        if vtype == "Generally Dangerous Function Call":
+            feature_vector["generally_dangerous_calls"] += 1
+        elif vtype == "Dangerous Function Call: Critical Sink Needing Try":
+            feature_vector["unprotected_critical_calls"] += 1
+        elif vtype == "Dangerous Function Call: Tainted Parameter Source":
+            feature_vector["tainted_input_in_dangerous_calls"] += 1
+        elif vtype == "Dangerous Function Call: Tainted Parameter Source":
+            feature_vector["tainted_param_source_calls"] += 1
+        elif vtype == "Dangerous Dynamic SQL Query":
+            feature_vector["dangerous_dynamic_sql"] += 1
         elif vtype == "Tainted Data Flow to Dangerous Sink":
             feature_vector["tainted_flows"] += 1
-        elif vtype == "Missing Error Handling" or vtype == "Unprotected Critical Function Call":
+        elif vtype == "Missing Error Handling":
             feature_vector["missing_error_handling"] += 1
         elif vtype == "Excessive Control Structure Nesting":
             feature_vector["deep_control_nesting"] += 1
