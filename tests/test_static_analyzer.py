@@ -101,18 +101,18 @@ def safe():
 
         self.assertEqual(results[3]['type'], 'Generally Dangerous Function Call')
         self.assertEqual(results[3]['function'], 'cursor.execute')
-        self.assertEqual(results[3]['line'], 8)
+        self.assertEqual(results[3]['line'], 7) #because \n line does not get counted
 
         self.assertEqual(results[4]['type'], 'Dangerous Function Call: Critical Sink Needing Try')
         self.assertEqual(results[4]['function'], 'cursor.execute')
-        self.assertEqual(results[4]['line'], 8)
+        self.assertEqual(results[4]['line'], 7)
 
         self.assertEqual(results[5]['type'], 'Dangerous Function Call: Tainted Parameter Source')
         self.assertEqual(results[5]['sink'], 'cursor.execute')
-        self.assertEqual(results[5]['line'], 8)
+        self.assertEqual(results[5]['line'], 7)
 
         self.assertEqual(results[6]['type'], 'Dangerous Dynamic SQL Query')
-        self.assertEqual(results[6]['line'], 8)
+        self.assertEqual(results[6]['line'], 7)
 
     def test_unprotected_dangerous_call_not_mitigated_by_try(self):
         code = """
