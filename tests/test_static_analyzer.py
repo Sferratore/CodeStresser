@@ -69,27 +69,50 @@ os.system(user)
 
     def test_vulnerable_code(self):
         code = """
-def unsafe():
-    user_input = input()
-    eval(user_input)
+    def unsafe():
+        user_input = input()
+        eval(user_input)
 
-def sql_example():
-    query = "SELECT * FROM users WHERE name = '" + input() + "'" 
-    cursor.execute(query)
+    def sql_example():
+        query = "SELECT * FROM users WHERE name = '" + input() + "'" 
+        cursor.execute(query)
 
-def safe():
-    try:
-        eval("2+2")
-    except:
-        print("Error")
-"""
+    def safe():
+        try:
+            eval("2+2")
+        except:
+            print("Error")
+    """
         results = self.analyze(code)
-        types = [v['type'] for v in results]
-        self.assertIn("Generally Dangerous Function Call", types)
-        self.assertIn("Dangerous Function Call: Critical Sink Needing Try", types)
-        self.assertIn("Dangerous Function Call: Tainted Parameter Source", types)
-        self.assertIn("Dangerous Dynamic SQL Query", types)
-        self.assertNotIn("Unprotected Critical Function Call", types)  # safe() is protected
+
+        self.assertEqual(len(results), 7)
+
+        self.assertEqual(results[0]['type'], 'Generally Dangerous Function Call')
+        self.assertEqual(results[0]['function'], 'eval')
+        self.assertEqual(results[0]['line'], 4)
+
+        self.assertEqual(results[1]['type'], 'Dangerous Function Call: Critical Sink Needing Try')
+        self.assertEqual(results[1]['function'], 'eval')
+        self.assertEqual(results[1]['line'], 4)
+
+        self.assertEqual(results[2]['type'], 'Dangerous Function Call: Tainted Parameter Source')
+        self.assertEqual(results[2]['sink'], 'eval')
+        self.assertEqual(results[2]['line'], 4)
+
+        self.assertEqual(results[3]['type'], 'Generally Dangerous Function Call')
+        self.assertEqual(results[3]['function'], 'cursor.execute')
+        self.assertEqual(results[3]['line'], 8)
+
+        self.assertEqual(results[4]['type'], 'Dangerous Function Call: Critical Sink Needing Try')
+        self.assertEqual(results[4]['function'], 'cursor.execute')
+        self.assertEqual(results[4]['line'], 8)
+
+        self.assertEqual(results[5]['type'], 'Dangerous Function Call: Tainted Parameter Source')
+        self.assertEqual(results[5]['sink'], 'cursor.execute')
+        self.assertEqual(results[5]['line'], 8)
+
+        self.assertEqual(results[6]['type'], 'Dangerous Dynamic SQL Query')
+        self.assertEqual(results[6]['line'], 8)
 
     def test_unprotected_dangerous_call_not_mitigated_by_try(self):
         code = """
