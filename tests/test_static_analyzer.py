@@ -69,20 +69,20 @@ os.system(user)
 
     def test_vulnerable_code(self):
         code = """
-    def unsafe():
-        user_input = input()
-        eval(user_input)
+def unsafe():
+    user_input = input()
+    eval(user_input)
 
-    def sql_example():
-        query = "SELECT * FROM users WHERE name = '" + input() + "'" 
-        cursor.execute(query)
+def sql_example():
+    query = "SELECT * FROM users WHERE name = '" + input() + "'" 
+    cursor.execute(query)
 
-    def safe():
-        try:
-            eval("2+2")
-        except:
-            print("Error")
-    """
+def safe():
+    try:
+        eval("2+2")
+    except:
+        print("Error")
+"""
         results = self.analyze(code)
 
         self.assertEqual(len(results), 7)
