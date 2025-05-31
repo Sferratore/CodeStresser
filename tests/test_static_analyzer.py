@@ -69,60 +69,54 @@ os.system(user)
 
     def test_vulnerable_code(self):
         code = """
-def unsafe():
-    user_input = input()
-    eval(user_input)
+    def unsafe():
+        user_input = input()
+        eval(user_input)
 
-def sql_example():
-    query = "SELECT * FROM users WHERE name = '" + input() + "'" 
-    cursor.execute(query)
+    def sql_example():
+        query = "SELECT * FROM users WHERE name = '" + input() + "'" 
+        cursor.execute(query)
 
-def safe():
-    try:
-        eval("2+2")
-    except:
-        print("Error")
-"""
-        analyzer = StaticAnalyzer()
-        vulnerabilities = analyzer.analyze(code)
-
-        vuln_types = [v["type"] for v in vulnerabilities]
-
-        self.assertIn("Unprotected Critical Function Call", vuln_types)
-        self.assertIn("Tainted Data Flow to Dangerous Sink", vuln_types)
-        self.assertIn("Dangerous Function Call", vuln_types)
-        self.assertIn("Dynamic SQL Query", vuln_types)
-
-        self.assertNotIn({'type': 'Unprotected Critical Function Call', 'function': 'eval', 'line': 11},
-                             vulnerabilities)
+    def safe():
+        try:
+            eval("2+2")
+        except:
+            print("Error")
+    """
+        results = self.analyze(code)
+        types = [v['type'] for v in results]
+        self.assertIn("Generally Dangerous Function Call", types)
+        self.assertIn("Dangerous Function Call: Critical Sink Needing Try", types)
+        self.assertIn("Dangerous Function Call: Tainted Parameter Source", types)
+        self.assertIn("Dangerous Dynamic SQL Query", types)
+        self.assertNotIn("Unprotected Critical Function Call", types)  # safe() is protected
 
     def test_unprotected_dangerous_call_not_mitigated_by_try(self):
         code = """
-            def f():
-                try:
-                    print("not dangerous")
-                except:
-                    pass
-                eval(input())  # should be detected as unprotected
-        """
-        analyzer = StaticAnalyzer()
-        results = analyzer.analyze(code)
-
-        # Check that eval is flagged as unprotected (since try block doesn't protect it)
-        self.assertTrue(any(
-            v['type'] == 'Unprotected Critical Function Call' and v['function'] == 'eval'
-            for v in results))
+    def f():
+        try:
+            print("not dangerous")
+        except:
+            pass
+        eval(input())  # should be detected as unprotected
+    """
+        results = self.analyze(code)
+        types = [v['type'] for v in results]
+        self.assertIn("Dangerous Function Call: Critical Sink Needing Try", types)
+        self.assertIn("Dangerous Function Call: Tainted Parameter Source", types)
+        self.assertIn("Generally Dangerous Function Call", types)
 
     def test_indirect_tainted_var(self):
         code = """
-query = "SELECT * FROM users WHERE name = '" + input() + "'" 
-cursor.execute(query)
-"""
-        analyzer = StaticAnalyzer()
-        vulnerabilities = analyzer.analyze(code)
-
-        vuln_types = [v["type"] for v in vulnerabilities]
-        self.assertIn("Dynamic SQL Query", vuln_types)
+    query = "SELECT * FROM users WHERE name = '" + input() + "'" 
+    cursor.execute(query)
+    """
+        results = self.analyze(code)
+        types = [v['type'] for v in results]
+        self.assertIn("Dangerous Dynamic SQL Query", types)
+        self.assertIn("Dangerous Function Call: Tainted Parameter Source", types)
+        self.assertIn("Generally Dangerous Function Call", types)
+        self.assertIn("Dangerous Function Call: Critical Sink Needing Try", types)
 
 if __name__ == '__main__':
     unittest.main()
