@@ -120,13 +120,13 @@ def other():
 
     def test_unprotected_dangerous_call_not_mitigated_by_try(self):
         code = """
-    def f():
-        try:
-            print("not dangerous")
-        except:
-            pass
-        eval(input())  # should be detected as unprotected
-    """
+def f():
+    try:
+        print("not dangerous")
+    except:
+        pass
+    eval(input())  # should be detected as unprotected
+"""
         results = self.analyze(code)
         types = [v['type'] for v in results]
         self.assertIn("Dangerous Function Call: Critical Sink Needing Try", types)
