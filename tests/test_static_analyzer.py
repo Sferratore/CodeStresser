@@ -146,13 +146,24 @@ def f():
         code = """
 query = "SELECT * FROM users WHERE name = '" + input() + "'" 
 cursor.execute(query)
-    """
+        """
         results = self.analyze(code)
-        types = [v['type'] for v in results]
-        self.assertIn("Dangerous Dynamic SQL Query", types)
-        self.assertIn("Dangerous Function Call: Tainted Parameter Source", types)
-        self.assertIn("Generally Dangerous Function Call", types)
-        self.assertIn("Dangerous Function Call: Critical Sink Needing Try", types)
+        self.assertEqual(len(results), 4)
+
+        self.assertEqual(results[0]['type'], 'Generally Dangerous Function Call')
+        self.assertEqual(results[0]['function'], 'cursor.execute')
+        self.assertEqual(results[0]['line'], 3)
+
+        self.assertEqual(results[1]['type'], 'Dangerous Function Call: Critical Sink Needing Try')
+        self.assertEqual(results[1]['function'], 'cursor.execute')
+        self.assertEqual(results[1]['line'], 3)
+
+        self.assertEqual(results[2]['type'], 'Dangerous Function Call: Tainted Parameter Source')
+        self.assertEqual(results[2]['sink'], 'cursor.execute')
+        self.assertEqual(results[2]['line'], 3)
+
+        self.assertEqual(results[3]['type'], 'Dangerous Dynamic SQL Query')
+        self.assertEqual(results[3]['line'], 3)
 
 if __name__ == '__main__':
     unittest.main()
