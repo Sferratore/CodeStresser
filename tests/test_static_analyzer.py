@@ -128,10 +128,19 @@ def f():
     eval(input())  # should be detected as unprotected
 """
         results = self.analyze(code)
-        types = [v['type'] for v in results]
-        self.assertIn("Dangerous Function Call: Critical Sink Needing Try", types)
-        self.assertIn("Dangerous Function Call: Tainted Parameter Source", types)
-        self.assertIn("Generally Dangerous Function Call", types)
+        self.assertEqual(len(results), 3)
+
+        self.assertEqual(results[0]['type'], 'Generally Dangerous Function Call')
+        self.assertEqual(results[0]['function'], 'eval')
+        self.assertEqual(results[0]['line'], 7)
+
+        self.assertEqual(results[1]['type'], 'Dangerous Function Call: Critical Sink Needing Try')
+        self.assertEqual(results[1]['function'], 'eval')
+        self.assertEqual(results[1]['line'], 7)
+
+        self.assertEqual(results[2]['type'], 'Dangerous Function Call: Tainted Parameter Source')
+        self.assertEqual(results[2]['sink'], 'eval')
+        self.assertEqual(results[2]['line'], 7)
 
     def test_indirect_tainted_var(self):
         code = """
