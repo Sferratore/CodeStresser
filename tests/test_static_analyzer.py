@@ -77,7 +77,7 @@ def sql_example():
     query = "SELECT * FROM users WHERE name = '" + input() + "'" 
     cursor.execute(query)
 
-def safe():
+def other():
     try:
         eval("2+2")
     except:
@@ -85,7 +85,7 @@ def safe():
 """
         results = self.analyze(code)
 
-        self.assertEqual(len(results), 7)
+        self.assertEqual(len(results), 8)
 
         self.assertEqual(results[0]['type'], 'Generally Dangerous Function Call')
         self.assertEqual(results[0]['function'], 'eval')
@@ -101,18 +101,22 @@ def safe():
 
         self.assertEqual(results[3]['type'], 'Generally Dangerous Function Call')
         self.assertEqual(results[3]['function'], 'cursor.execute')
-        self.assertEqual(results[3]['line'], 7) #because \n line does not get counted
+        self.assertEqual(results[3]['line'], 8) #because \n line does not get counted
 
         self.assertEqual(results[4]['type'], 'Dangerous Function Call: Critical Sink Needing Try')
         self.assertEqual(results[4]['function'], 'cursor.execute')
-        self.assertEqual(results[4]['line'], 7)
+        self.assertEqual(results[4]['line'], 8)
 
         self.assertEqual(results[5]['type'], 'Dangerous Function Call: Tainted Parameter Source')
         self.assertEqual(results[5]['sink'], 'cursor.execute')
-        self.assertEqual(results[5]['line'], 7)
+        self.assertEqual(results[5]['line'], 8)
 
         self.assertEqual(results[6]['type'], 'Dangerous Dynamic SQL Query')
-        self.assertEqual(results[6]['line'], 7)
+        self.assertEqual(results[6]['line'], 8)
+
+        self.assertEqual(results[7]['type'], 'Generally Dangerous Function Call')
+        self.assertEqual(results[7]['function'], 'eval')
+        self.assertEqual(results[7]['line'], 12)
 
     def test_unprotected_dangerous_call_not_mitigated_by_try(self):
         code = """
