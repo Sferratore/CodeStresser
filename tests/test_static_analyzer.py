@@ -144,8 +144,8 @@ def f():
 
     def test_indirect_tainted_var(self):
         code = """
-    query = "SELECT * FROM users WHERE name = '" + input() + "'" 
-    cursor.execute(query)
+query = "SELECT * FROM users WHERE name = '" + input() + "'" 
+cursor.execute(query)
     """
         results = self.analyze(code)
         types = [v['type'] for v in results]
