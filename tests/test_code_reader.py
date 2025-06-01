@@ -36,7 +36,7 @@ class TestCodeReader(unittest.TestCase):
 
     def test_read_directory_with_multiple_py_files(self):
         file1 = self.create_file("a.py", "print(1)")
-        file2 = self.create_file("subdir/b.py", "print(2)")
+        file2 = self.create_file("subdir\\b.py", "print(2)")
         reader = CodeReader()
         results = reader.read_files(self.test_dir)
         paths = [r[0] for r in results]
