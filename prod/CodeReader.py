@@ -7,10 +7,10 @@ class CodeReader:
 
     def read_files(self, path: str) -> List[Tuple[str, str]]:
         """
-        Legge tutti i file con le estensioni specificate in una directory o un singolo file.
+        Reads all the files with specified extension in a directory/single file.
 
-        :param path: Percorso al file o alla directory.
-        :return: Lista di tuple (percorso_file, contenuto).
+        :param path: Path of file/directory.
+        :return: Tuple list (file_path, content).
         """
         files_content = []
 
@@ -24,7 +24,7 @@ class CodeReader:
                     content = self._read_file(file_path)
                     files_content.append((str(file_path), content))
         else:
-            print(f"Percorso non valido o estensione non supportata: {path}")
+            print(f"Path not valid or wrong extension: {path}")
 
         return files_content
 
