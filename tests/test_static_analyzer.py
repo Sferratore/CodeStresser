@@ -61,8 +61,8 @@ os.system(user)
 
     def test_uninitialized_variable_usage(self):
         code = """
-    def example():
-        print(foo)
+def example():
+    print(foo)
     """
         results = self.analyze(code)
         self.assertEqual(len(results), 1)
