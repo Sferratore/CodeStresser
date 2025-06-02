@@ -55,8 +55,20 @@ class StaticAnalyzer(ast.NodeVisitor):
         }
 
         # Critical sinks that require try/except for runtime protection
-        self.critical_sinks_needing_try = {
-            "eval", "exec", "os.system", "subprocess.call", "subprocess.Popen", "cursor.execute"
+        self.critical_functions_needing_try = {
+            "eval", "exec",  # Code execution
+            "os.system",  # System command execution
+            "subprocess.call", "subprocess.Popen", "subprocess.run", "subprocess.check_call", "subprocess.check_output",
+            # Process handling
+            "open", "os.remove", "os.unlink",  # File operations
+            "os.rename", "os.replace",  # File system changes
+            "os.mkdir", "os.makedirs", "os.rmdir", "os.removedirs",  # Directory operations
+            "shutil.copy", "shutil.copy2", "shutil.copytree", "shutil.move", "shutil.rmtree",
+            # File and directory manipulation
+            "json.load", "json.loads",  # Can raise decoding errors
+            "pickle.load",  # Can raise EOFError or PickleError
+            "int", "float",  # Conversion functions (can raise ValueError)
+            "cursor.execute", "cursor.executemany"  # Database queries
         }
 
         # Set of variables marked as tainted (containing data coming from non-trusted sources)
@@ -182,8 +194,8 @@ class StaticAnalyzer(ast.NodeVisitor):
                 "line": node.lineno
             })
 
-        # --- Check for critical sink that requires try/except protection ---
-        if func_name in self.critical_sinks_needing_try:
+        # --- Check for critical functions that requires try/except protection ---
+        if func_name in self.critical_functions_needing_try:
             if not self.in_try_block:
                 # Dangerous + unprotected: must be reported
                 self.vulnerabilities.append({
