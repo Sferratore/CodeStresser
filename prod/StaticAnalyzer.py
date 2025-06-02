@@ -297,16 +297,14 @@ class StaticAnalyzer(ast.NodeVisitor):
         if node.id in self.builtins:
             return
 
-        # We are only interested in variables being used (not defined),
-        # so we check if the context is 'Load' (read usage).
-        #if isinstance(node.ctx, ast.Load):
-            # If the variable has not been defined earlier (via assignment)
-            # and it's not marked as tainted input, we report it as a potential issue.
-            # self.vulnerabilities.append({
-                #"type": "Use of Uninitialized Variable",
-                #"variable": node.id,
-                #"line": node.lineno
-            #})
+        # We are only interested in variables being used (not defined)
+        if isinstance(node.ctx, ast.Load):
+            if node.id not in self.defined_vars:
+                self.vulnerabilities.append({
+                    "type": "Use of Uninitialized Variable",
+                    "variable": node.id,
+                    "line": node.lineno
+                })
 
         # Continue visiting any child nodes of this Name node.
         self.generic_visit(node)
