@@ -152,7 +152,7 @@ class StaticAnalyzer(ast.NodeVisitor):
             if isinstance(target, ast.Name):
                 self.defined_vars.add(target.id)
 
-        # === Case 1: direct input() ===
+        # === Case 1: input from tainted sources ===
         if isinstance(value, ast.Call):
             if isinstance(value.func, ast.Name):
                 if value.func.id in self.sources:
