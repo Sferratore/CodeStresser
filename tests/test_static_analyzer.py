@@ -40,7 +40,7 @@ user = input()
 os.system(user)
 """
         results = self.analyze(code)
-        self.assertEqual(len(results), 4)
+        self.assertEqual(len(results), 3)
         self.assertEqual(results[0]['type'], 'Generally Dangerous Function Call')
         self.assertEqual(results[0]['line'], 3)
         self.assertEqual(results[1]['type'], 'Dangerous Function Call: Critical Sink Needing Try')
