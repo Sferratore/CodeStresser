@@ -205,26 +205,17 @@ class StaticAnalyzer(ast.NodeVisitor):
                 })
 
         # --- Check for tainted input passed to dangerous function call ---
-        if func_name in self.sinks:
+        if func_name in self.sinks and func_name != "open":
             for arg in node.args:
-                # Case 1: direct call to a source like input()
-                if isinstance(arg, ast.Call) and isinstance(arg.func, ast.Name) and arg.func.id in self.sources:
-                    self.vulnerabilities.append({
-                        "type": "Dangerous Function Call: Tainted Parameter Source",
-                        "sink": func_name,
-                        "line": node.lineno
-                    })
-
-                # Case 2: variable that is tainted
-                elif isinstance(arg, ast.Name) and arg.id in self.tainted_vars:
-                    self.vulnerabilities.append({
-                        "type": "Dangerous Function Call: Tainted Parameter Source",
-                        "sink": func_name,
-                        "line": node.lineno
-                    })
-
-                # Case 3: expression composed with tainted input (e.g., "SELECT " + user_input)
-                elif isinstance(arg, (ast.BinOp, ast.JoinedStr)) and is_tainted_expr(arg, self.tainted_vars, self.sources):
+                if (
+                        # Case 1: direct source call, e.g., input()
+                        (isinstance(arg, ast.Call) and isinstance(arg.func, ast.Name) and arg.func.id in self.sources)
+                        # Case 2: tainted variable
+                        or (isinstance(arg, ast.Name) and arg.id in self.tainted_vars)
+                        # Case 3: tainted expression like f-string or concat
+                        or (isinstance(arg, (ast.BinOp, ast.JoinedStr)) and is_tainted_expr(arg, self.tainted_vars,
+                                                                                            self.sources))
+                ):
                     self.vulnerabilities.append({
                         "type": "Dangerous Function Call: Tainted Parameter Source",
                         "sink": func_name,
