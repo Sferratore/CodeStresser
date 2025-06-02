@@ -59,6 +59,17 @@ os.system(user)
         results = self.analyze(code)
         self.assertEqual(len(results), 0)
 
+    def test_uninitialized_variable_usage(self):
+        code = """
+    def example():
+        print(foo)
+    """
+        results = self.analyze(code)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]['type'], 'Use of Uninitialized Variable')
+        self.assertEqual(results[0]['variable'], 'foo')
+        self.assertEqual(results[0]['line'], 3)
+
     def test_feature_vector_output(self):
         code = "def f():\n eval(input())"
         vulns = self.analyze(code)
