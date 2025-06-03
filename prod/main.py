@@ -2,7 +2,7 @@ import os
 import json
 import pandas as pd
 
-from prod.VulnerabilityModelTrainer import VulnerabilityModelTrainer
+from prod.VulnerabilityModelTrainingPipeline import VulnerabilityModelTrainer
 from prod.StaticAnalyzer import StaticAnalyzer
 from prod.VulnerabilityReportGenerator import VulnerabilityReportGenerator
 from prod.CodeReader import CodeReader

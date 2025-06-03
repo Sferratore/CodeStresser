@@ -5,7 +5,7 @@
     "line": 6,
     "issue": "Generally Dangerous Function Call",
     "severity": "Low",
-    "confidence": 0.7,
+    "confidence": 0.76,
     "suggested_fix": "Avoid eval/exec; use safer alternatives."
   },
   {
@@ -14,7 +14,7 @@
     "line": 6,
     "issue": "Dangerous Function Call: Critical Sink Needing Try",
     "severity": "Low",
-    "confidence": 0.69,
+    "confidence": 0.75,
     "suggested_fix": "Review the code and apply standard security practices."
   },
   {
@@ -22,8 +22,8 @@
     "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
     "line": 6,
     "issue": "Dangerous Function Call: Tainted Parameter Source",
-    "severity": "Low",
-    "confidence": 0.68,
+    "severity": "Medium",
+    "confidence": 0.72,
     "suggested_fix": "Review the code and apply standard security practices."
   },
   {
@@ -31,8 +31,8 @@
     "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
     "line": 10,
     "issue": "Use of Uninitialized Variable",
-    "severity": "Low",
-    "confidence": 0.69,
+    "severity": "Medium",
+    "confidence": 0.72,
     "suggested_fix": "Initialize variables before use."
   },
   {
@@ -41,7 +41,7 @@
     "line": 14,
     "issue": "Generally Dangerous Function Call",
     "severity": "Low",
-    "confidence": 0.7,
+    "confidence": 0.76,
     "suggested_fix": "Avoid eval/exec; use safer alternatives."
   },
   {
@@ -50,7 +50,7 @@
     "line": 14,
     "issue": "Dangerous Function Call: Critical Sink Needing Try",
     "severity": "Low",
-    "confidence": 0.69,
+    "confidence": 0.75,
     "suggested_fix": "Review the code and apply standard security practices."
   },
   {
@@ -58,8 +58,8 @@
     "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
     "line": 14,
     "issue": "Dangerous Function Call: Tainted Parameter Source",
-    "severity": "Low",
-    "confidence": 0.68,
+    "severity": "Medium",
+    "confidence": 0.72,
     "suggested_fix": "Review the code and apply standard security practices."
   },
   {
@@ -67,8 +67,8 @@
     "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
     "line": 14,
     "issue": "Dangerous Dynamic SQL Query",
-    "severity": "Low",
-    "confidence": 0.69,
+    "severity": "High",
+    "confidence": 0.91,
     "suggested_fix": "Use parameterized queries instead of string concatenation."
   },
   {
@@ -76,8 +76,8 @@
     "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
     "line": 16,
     "issue": "Use of Uninitialized Variable",
-    "severity": "Low",
-    "confidence": 0.69,
+    "severity": "Medium",
+    "confidence": 0.72,
     "suggested_fix": "Initialize variables before use."
   },
   {
@@ -86,7 +86,7 @@
     "line": 21,
     "issue": "Dangerous Function Call: Critical Sink Needing Try",
     "severity": "Low",
-    "confidence": 0.69,
+    "confidence": 0.75,
     "suggested_fix": "Review the code and apply standard security practices."
   },
   {
@@ -95,7 +95,7 @@
     "line": 21,
     "issue": "Tainted File Access (open)",
     "severity": "Low",
-    "confidence": 0.69,
+    "confidence": 0.91,
     "suggested_fix": "Validate file paths to avoid path traversal."
   },
   {
@@ -103,8 +103,8 @@
     "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
     "line": 22,
     "issue": "Use of Uninitialized Variable",
-    "severity": "Low",
-    "confidence": 0.69,
+    "severity": "Medium",
+    "confidence": 0.72,
     "suggested_fix": "Initialize variables before use."
   },
   {
@@ -112,8 +112,8 @@
     "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
     "line": 31,
     "issue": "Use of Uninitialized Variable",
-    "severity": "Low",
-    "confidence": 0.69,
+    "severity": "Medium",
+    "confidence": 0.72,
     "suggested_fix": "Initialize variables before use."
   },
   {
@@ -121,8 +121,8 @@
     "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
     "line": 33,
     "issue": "Use of Uninitialized Variable",
-    "severity": "Low",
-    "confidence": 0.69,
+    "severity": "Medium",
+    "confidence": 0.72,
     "suggested_fix": "Initialize variables before use."
   },
   {
@@ -130,8 +130,8 @@
     "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
     "line": 35,
     "issue": "Use of Uninitialized Variable",
-    "severity": "Low",
-    "confidence": 0.69,
+    "severity": "Medium",
+    "confidence": 0.72,
     "suggested_fix": "Initialize variables before use."
   },
   {
@@ -139,8 +139,8 @@
     "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
     "line": 38,
     "issue": "Use of Uninitialized Variable",
-    "severity": "Low",
-    "confidence": 0.69,
+    "severity": "Medium",
+    "confidence": 0.72,
     "suggested_fix": "Initialize variables before use."
   }
 ]
