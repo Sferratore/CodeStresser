@@ -28,14 +28,9 @@ SCALER_PATH = os.path.join(MODEL_DIR, "scaler.pkl")
 
 def train_models():
     print("[*] Training models on labeled vulnerability data...")
-    data = pd.read_csv(TRAINING_DATA_PATH)
-    trainer = VulnerabilityModelTrainingPipeline()
-    trainer.load_data(data)
-    trainer.preprocess()
-    trainer.train()
-    trainer.save(SEVERITY_MODEL_PATH, CONFIDENCE_MODEL_PATH, SCALER_PATH)
-    print(f"[+] Models saved to {MODEL_DIR}")
-
+    pipeline = VulnerabilityModelTrainingPipeline()
+    pipeline.run_pipeline()
+    print(f"[+] Models saved to {pipeline.model_severity_path}, {pipeline.model_confidence_path}, {pipeline.scaler_path}")
 
 # ===========================
 # Phase 2: Run Static Analysis & Generate Report
