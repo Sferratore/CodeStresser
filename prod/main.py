@@ -2,7 +2,7 @@ import os
 import json
 import pandas as pd
 
-from prod.VulnerabilityModelTrainingPipeline import VulnerabilityModelTrainer
+from prod.VulnerabilityModelTrainingPipeline import VulnerabilityModelTrainingPipeline
 from prod.StaticAnalyzer import StaticAnalyzer
 from prod.VulnerabilityReportGenerator import VulnerabilityReportGenerator
 from prod.CodeReader import CodeReader
@@ -29,7 +29,7 @@ SCALER_PATH = os.path.join(MODEL_DIR, "scaler.pkl")
 def train_models():
     print("[*] Training models on labeled vulnerability data...")
     data = pd.read_csv(TRAINING_DATA_PATH)
-    trainer = VulnerabilityModelTrainer()
+    trainer = VulnerabilityModelTrainingPipeline()
     trainer.load_data(data)
     trainer.preprocess()
     trainer.train()
