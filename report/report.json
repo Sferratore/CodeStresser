@@ -30,16 +30,6 @@
     "suggested_fix": "Review the code and apply standard security practices."
   },
   {
-    "problematic_function": "--",
-    "problematic_variable": "sqlite3",
-    "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
-    "line": 10,
-    "issue": "Use of Uninitialized Variable",
-    "severity": "Medium",
-    "confidence": 0.72,
-    "suggested_fix": "Initialize variables before use."
-  },
-  {
     "problematic_function": "cursor.execute",
     "problematic_variable": "--",
     "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
@@ -80,16 +70,6 @@
     "suggested_fix": "Use parameterized queries instead of string concatenation."
   },
   {
-    "problematic_function": "--",
-    "problematic_variable": "row",
-    "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
-    "line": 16,
-    "issue": "Use of Uninitialized Variable",
-    "severity": "Medium",
-    "confidence": 0.72,
-    "suggested_fix": "Initialize variables before use."
-  },
-  {
     "problematic_function": "open",
     "problematic_variable": "--",
     "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
@@ -108,55 +88,5 @@
     "severity": "Low",
     "confidence": 0.91,
     "suggested_fix": "Validate file paths to avoid path traversal."
-  },
-  {
-    "problematic_function": "--",
-    "problematic_variable": "f",
-    "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
-    "line": 22,
-    "issue": "Use of Uninitialized Variable",
-    "severity": "Medium",
-    "confidence": 0.72,
-    "suggested_fix": "Initialize variables before use."
-  },
-  {
-    "problematic_function": "--",
-    "problematic_variable": "handle_user_input",
-    "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
-    "line": 31,
-    "issue": "Use of Uninitialized Variable",
-    "severity": "Medium",
-    "confidence": 0.72,
-    "suggested_fix": "Initialize variables before use."
-  },
-  {
-    "problematic_function": "--",
-    "problematic_variable": "search_user",
-    "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
-    "line": 33,
-    "issue": "Use of Uninitialized Variable",
-    "severity": "Medium",
-    "confidence": 0.72,
-    "suggested_fix": "Initialize variables before use."
-  },
-  {
-    "problematic_function": "--",
-    "problematic_variable": "read_file",
-    "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
-    "line": 35,
-    "issue": "Use of Uninitialized Variable",
-    "severity": "Medium",
-    "confidence": 0.72,
-    "suggested_fix": "Initialize variables before use."
-  },
-  {
-    "problematic_function": "--",
-    "problematic_variable": "main",
-    "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
-    "line": 38,
-    "issue": "Use of Uninitialized Variable",
-    "severity": "Medium",
-    "confidence": 0.72,
-    "suggested_fix": "Initialize variables before use."
   }
 ]
