@@ -1,3 +1,3 @@
 generally_dangerous_calls,unprotected_critical_calls,tainted_input_in_dangerous_calls,tainted_param_source_calls,dangerous_dynamic_sql,tainted_flows,missing_error_handling,deep_control_nesting,uninitialized_variable_usage,tainted_file_access,unsafe_deserialization,buffer_overflow_risk,severity,confidence
-999,0,0,0,0,0,0,0,0,0,0,0,Critical,1.0
-0,0,1,0,0,0,0,0,0,0,0,1,High,0.95
+invalid,0,0,0,0,0,0,0,0,0,0,0,Low,0.5
+1,0,0,0,0,0,0,0,0,0,0,0,Medium,0.6
