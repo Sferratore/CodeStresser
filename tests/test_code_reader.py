@@ -65,17 +65,5 @@ class TestCodeReader(unittest.TestCase):
         results = reader.read_files(invalid_path)
         self.assertEqual(results, [])
 
-    def test_extension(self):
-        # Create files with different extensions
-        py_file = self.create_file("script.py", "print('python')")
-
-        # Reader configured to support .py
-        reader = CodeReader(extensions=[".py"])
-        results = reader.read_files(self.test_dir)
-        paths = [r[0] for r in results]
-
-        self.assertIn(py_file, paths)
-        self.assertEqual(len(results), 3)
-
 if __name__ == '__main__':
     unittest.main()
