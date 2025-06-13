@@ -2,7 +2,10 @@ from pathlib import Path
 from typing import List, Tuple
 
 class CodeReader:
-    def __init__(self, extensions: List[str] = [".py"]):
+    def __init__(self, extensions: List[str] = [
+        ".py", ".java", ".cpp", ".c", ".js", ".ts",
+        ".cs", ".go", ".rb", ".php", ".swift", ".rs"
+    ]):
         self.extensions = extensions
 
     def read_files(self, path: str) -> List[Tuple[str, str]]:
