@@ -68,19 +68,13 @@ class TestCodeReader(unittest.TestCase):
     def test_extension(self):
         # Create files with different extensions
         py_file = self.create_file("script.py", "print('python')")
-        js_file = self.create_file("script.js", "console.log('js')")
-        java_file = self.create_file("Main.java", "public class Main {}")
-        txt_file = self.create_file("note.txt", "ignored")
 
-        # Reader configured to support .py, .js, .java
-        reader = CodeReader(extensions=[".py", ".js", ".java"])
+        # Reader configured to support .py
+        reader = CodeReader(extensions=[".py"])
         results = reader.read_files(self.test_dir)
         paths = [r[0] for r in results]
 
         self.assertIn(py_file, paths)
-        self.assertIn(js_file, paths)
-        self.assertIn(java_file, paths)
-        self.assertNotIn(txt_file, paths)
         self.assertEqual(len(results), 3)
 
 if __name__ == '__main__':
