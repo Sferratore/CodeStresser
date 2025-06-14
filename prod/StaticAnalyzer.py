@@ -75,7 +75,10 @@ class StaticAnalyzer(ast.NodeVisitor):
                         last_body_line = stmt.body[-1].lineno
                         add_edge(last_body_line, lineno)
                 elif isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    process_body(stmt.body, None)
+                    next_after = get_next_lineno(body, idx, next_lineno)
+                    if stmt.body:
+                        add_edge(lineno, stmt.body[0].lineno)
+                    process_body(stmt.body, next_after)
                 prev_lineno = lineno
             if prev_lineno is not None and next_lineno is not None:
                 add_edge(prev_lineno, next_lineno)
@@ -264,8 +267,11 @@ class StaticAnalyzer(ast.NodeVisitor):
     def get_full_func_name(self, func) -> str:
         if isinstance(func, ast.Name):
             return func.id
-        elif isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name):
-            return f"{func.value.id}.{func.attr}"
+        elif isinstance(func, ast.Attribute):
+            prefix = self.get_full_func_name(func.value)
+            if prefix:
+                return f"{prefix}.{func.attr}"
+            return func.attr
         return ""
 
     def analyze(self, code: str) -> List[Dict[str, Any]]:

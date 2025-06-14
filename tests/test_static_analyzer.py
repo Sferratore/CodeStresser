@@ -209,6 +209,12 @@ def foo(p):
     f = open(p)
         """
         results = self.analyze(code)
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0]['type'], 'Dangerous Function Call: Critical Sink Needing Try')
+        self.assertEqual(results[0]['function'], 'open')
+        self.assertEqual(results[0]['line'], 7)
+        self.assertEqual(results[1]['type'], 'Potential TOCTOU')
+        self.assertEqual(results[1]['line'], 7)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]['type'], 'Potential TOCTOU')
         self.assertEqual(results[0]['line'], 7)
