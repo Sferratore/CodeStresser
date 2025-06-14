@@ -3,14 +3,14 @@ import sqlite3
 
 def handle_user_input():
     user_code = input("Enter code to evaluate: ")
-    result = eval(user_code)  # 🔥 Vulnerabilità: esecuzione arbitraria
+    result = eval(user_code)  # Vulnerability: arbitrary exec
     print("Result:", result)
 
 def search_user(db_path):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     name = input("Enter username to search: ")
-    query = "SELECT * FROM users WHERE name = '" + name + "'"  # 🔥 Vulnerabilità: SQL Injection
+    query = "SELECT * FROM users WHERE name = '" + name + "'"  # Vulnerability: SQL Injection
     cursor.execute(query)
     for row in cursor.fetchall():
         print(row)
@@ -18,7 +18,7 @@ def search_user(db_path):
 
 def read_file():
     filename = input("Enter filename: ")
-    with open(filename, "r") as f:  # 🔥 Vulnerabilità: Path traversal
+    with open(filename, "r") as f:  # Vulnerability: Path exploit
         content = f.read()
         print(content)
 
