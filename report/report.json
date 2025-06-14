@@ -7,7 +7,7 @@
     "issue": "Generally Dangerous Function Call",
     "severity": "Low",
     "confidence": 0.76,
-    "suggested_fix": "Avoid eval/exec; use safer alternatives."
+    "suggested_fix": "Avoid calling dangerous calls; use safer alternatives."
   },
   {
     "problematic_function": "eval",
@@ -37,7 +37,7 @@
     "issue": "Generally Dangerous Function Call",
     "severity": "Low",
     "confidence": 0.76,
-    "suggested_fix": "Avoid eval/exec; use safer alternatives."
+    "suggested_fix": "Avoid calling dangerous calls; use safer alternatives."
   },
   {
     "problematic_function": "cursor.execute",
@@ -88,5 +88,9 @@
     "severity": "Low",
     "confidence": 0.91,
     "suggested_fix": "Validate file paths to avoid path traversal."
+  },
+  {
+    "error": "Syntax error at line 1: def bad_function:\n",
+    "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code2.py"
   }
 ]
