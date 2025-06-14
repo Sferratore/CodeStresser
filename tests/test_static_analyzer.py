@@ -1,4 +1,5 @@
 import unittest
+import ast
 from prod.StaticAnalyzer import StaticAnalyzer, generate_feature_vector
 
 class TestStaticAnalyzer(unittest.TestCase):
@@ -6,6 +7,38 @@ class TestStaticAnalyzer(unittest.TestCase):
     def analyze(self, code):
         analyzer = StaticAnalyzer()
         return analyzer.analyze(code)
+
+    def build_edges(self, code):
+        analyzer = StaticAnalyzer()
+        tree = ast.parse(code)
+        return analyzer.build_cfg(tree)
+
+    def test_cfg_linear_flow(self):
+        code = """
+def foo():
+    a = 1
+    b = 2
+    return a
+"""
+        edges = self.build_edges(code)
+        self.assertIn(3, edges.get(2, set()))
+        self.assertIn(4, edges.get(3, set()))
+        self.assertIn(5, edges.get(4, set()))
+
+    def test_cfg_if_flow(self):
+        code = """
+def foo(x):
+    if x:
+        a = 1
+    else:
+        a = 2
+    return a
+"""
+        edges = self.build_edges(code)
+        self.assertIn(4, edges.get(3, set()))
+        self.assertIn(6, edges.get(3, set()))
+        self.assertIn(7, edges.get(4, set()))
+        self.assertIn(7, edges.get(6, set()))
 
     def test_eval_detection(self):
         code = "eval(input())"
@@ -145,7 +178,7 @@ def f():
 
     def test_indirect_tainted_var(self):
         code = """
-query = "SELECT * FROM users WHERE name = '" + input() + "'" 
+query = "SELECT * FROM users WHERE name = '" + input() + "'"
 cursor.execute(query)
         """
         results = self.analyze(code)
@@ -165,6 +198,24 @@ cursor.execute(query)
 
         self.assertEqual(results[3]['type'], 'Dangerous Dynamic SQL Query')
         self.assertEqual(results[3]['line'], 3)
+
+    def test_toctou_detection(self):
+        code = """
+import os
+
+def foo(p):
+    if os.path.exists(p):
+        print("exists")
+    f = open(p)
+        """
+        results = self.analyze(code)
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0]['type'], 'Dangerous Function Call: Critical Sink Needing Try')
+        self.assertEqual(results[0]['function'], 'open')
+        self.assertEqual(results[0]['line'], 7)
+        self.assertEqual(results[1]['type'], 'Potential TOCTOU')
+        self.assertEqual(results[1]['line'], 7)
+
 
 if __name__ == '__main__':
     unittest.main()

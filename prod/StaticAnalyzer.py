@@ -1,6 +1,6 @@
 import ast
 import builtins
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Set
 
 class StaticAnalyzer(ast.NodeVisitor):
     def __init__(self):
@@ -32,6 +32,59 @@ class StaticAnalyzer(ast.NodeVisitor):
         self.max_control_depth = 0
         self.in_try_block = False
         self.builtins = set(dir(builtins))
+        self.cfg: Dict[int, Set[int]] = {}
+        self.line_to_call: Dict[int, tuple] = {}
+
+    def build_cfg(self, tree: ast.AST) -> Dict[int, Set[int]]:
+        edges: Dict[int, Set[int]] = {}
+
+        def add_edge(src: int, dst: int | None):
+            if dst is None:
+                return
+            edges.setdefault(src, set()).add(dst)
+
+        def get_next_lineno(stmt_list: List[ast.stmt], index: int, parent_next: int | None) -> int | None:
+            if index + 1 < len(stmt_list):
+                return stmt_list[index + 1].lineno
+            return parent_next
+
+        def process_body(body: List[ast.stmt], next_lineno: int | None):
+            prev_lineno: int | None = None
+            for idx, stmt in enumerate(body):
+                lineno = getattr(stmt, "lineno", None)
+                if lineno is None:
+                    continue
+                if prev_lineno is not None:
+                    add_edge(prev_lineno, lineno)
+
+                if isinstance(stmt, ast.If):
+                    next_after = get_next_lineno(body, idx, next_lineno)
+                    body_first = stmt.body[0].lineno if stmt.body else next_after
+                    orelse_first = stmt.orelse[0].lineno if stmt.orelse else next_after
+                    add_edge(lineno, body_first)
+                    add_edge(lineno, orelse_first)
+                    process_body(stmt.body, next_after)
+                    process_body(stmt.orelse, next_after)
+                elif isinstance(stmt, (ast.For, ast.While)):
+                    next_after = get_next_lineno(body, idx, next_lineno)
+                    body_first = stmt.body[0].lineno if stmt.body else next_after
+                    add_edge(lineno, body_first)
+                    add_edge(lineno, next_after)
+                    process_body(stmt.body, lineno)
+                    if stmt.body:
+                        last_body_line = stmt.body[-1].lineno
+                        add_edge(last_body_line, lineno)
+                elif isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    next_after = get_next_lineno(body, idx, next_lineno)
+                    if stmt.body:
+                        add_edge(lineno, stmt.body[0].lineno)
+                    process_body(stmt.body, next_after)
+                prev_lineno = lineno
+            if prev_lineno is not None and next_lineno is not None:
+                add_edge(prev_lineno, next_lineno)
+
+        process_body(tree.body, None)
+        return edges
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         self.current_function = node.name
@@ -48,6 +101,42 @@ class StaticAnalyzer(ast.NodeVisitor):
                 "depth": self.max_control_depth,
                 "line": node.lineno
             })
+
+    def _get_var_name(self, arg) -> str | None:
+        if isinstance(arg, ast.Name):
+            return arg.id
+        return None
+
+    def _detect_toctou(self):
+        checks = {line: info for line, info in self.line_to_call.items() if info[0] == "check"}
+        uses = {line: info for line, info in self.line_to_call.items() if info[0] == "use"}
+
+        def reachable(start: int, target: int) -> bool:
+            visited = set([start])
+            stack = [start]
+            while stack:
+                cur = stack.pop()
+                if cur == target:
+                    return True
+                for nxt in self.cfg.get(cur, []):
+                    if nxt not in visited:
+                        visited.add(nxt)
+                        stack.append(nxt)
+            return False
+
+        for c_line, (_, _, c_arg) in checks.items():
+            c_var = self._get_var_name(c_arg)
+            if not c_var:
+                continue
+            for u_line, (kind, u_func, u_arg) in uses.items():
+                if reachable(c_line, u_line):
+                    u_var = self._get_var_name(u_arg)
+                    if c_var == u_var:
+                        self.vulnerabilities.append({
+                            "type": "Potential TOCTOU",
+                            "function": u_func,
+                            "line": u_line
+                        })
 
     def visit_Try(self, node: ast.Try):
         old = self.in_try_block
@@ -102,6 +191,12 @@ class StaticAnalyzer(ast.NodeVisitor):
 
     def visit_Call(self, node: ast.Call):
         func_name = self.get_full_func_name(node.func)
+        if func_name in {"os.path.exists", "os.access", "os.stat"}:
+            arg = node.args[0] if node.args else None
+            self.line_to_call[node.lineno] = ("check", func_name, arg)
+        elif func_name in {"open", "os.remove", "os.unlink", "os.rmdir"}:
+            arg = node.args[0] if node.args else None
+            self.line_to_call[node.lineno] = ("use", func_name, arg)
 
         if func_name in self.sinks:
             self.vulnerabilities.append({
@@ -172,14 +267,19 @@ class StaticAnalyzer(ast.NodeVisitor):
     def get_full_func_name(self, func) -> str:
         if isinstance(func, ast.Name):
             return func.id
-        elif isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name):
-            return f"{func.value.id}.{func.attr}"
+        elif isinstance(func, ast.Attribute):
+            prefix = self.get_full_func_name(func.value)
+            if prefix:
+                return f"{prefix}.{func.attr}"
+            return func.attr
         return ""
 
     def analyze(self, code: str) -> List[Dict[str, Any]]:
         try:
             tree = ast.parse(code)
+            self.cfg = self.build_cfg(tree)
             self.visit(tree)
+            self._detect_toctou()
         except SyntaxError as e:
             return [{"error": f"Syntax error at line {e.lineno}: {e.text}"}]
         return self.vulnerabilities
