@@ -1,4 +1,5 @@
 import unittest
+import ast
 from prod.StaticAnalyzer import StaticAnalyzer, generate_feature_vector
 
 class TestStaticAnalyzer(unittest.TestCase):
@@ -6,6 +7,38 @@ class TestStaticAnalyzer(unittest.TestCase):
     def analyze(self, code):
         analyzer = StaticAnalyzer()
         return analyzer.analyze(code)
+
+    def build_edges(self, code):
+        analyzer = StaticAnalyzer()
+        tree = ast.parse(code)
+        return analyzer.build_cfg(tree)
+
+    def test_cfg_linear_flow(self):
+        code = """
+def foo():
+    a = 1
+    b = 2
+    return a
+"""
+        edges = self.build_edges(code)
+        self.assertIn(3, edges.get(2, set()))
+        self.assertIn(4, edges.get(3, set()))
+        self.assertIn(5, edges.get(4, set()))
+
+    def test_cfg_if_flow(self):
+        code = """
+def foo(x):
+    if x:
+        a = 1
+    else:
+        a = 2
+    return a
+"""
+        edges = self.build_edges(code)
+        self.assertIn(4, edges.get(3, set()))
+        self.assertIn(6, edges.get(3, set()))
+        self.assertIn(7, edges.get(4, set()))
+        self.assertIn(7, edges.get(6, set()))
 
     def test_eval_detection(self):
         code = "eval(input())"
