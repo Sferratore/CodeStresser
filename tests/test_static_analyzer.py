@@ -145,7 +145,7 @@ def f():
 
     def test_indirect_tainted_var(self):
         code = """
-query = "SELECT * FROM users WHERE name = '" + input() + "'" 
+query = "SELECT * FROM users WHERE name = '" + input() + "'"
 cursor.execute(query)
         """
         results = self.analyze(code)
@@ -165,6 +165,21 @@ cursor.execute(query)
 
         self.assertEqual(results[3]['type'], 'Dangerous Dynamic SQL Query')
         self.assertEqual(results[3]['line'], 3)
+
+    def test_toctou_detection(self):
+        code = """
+import os
+
+def foo(p):
+    if os.path.exists(p):
+        print("exists")
+    f = open(p)
+        """
+        results = self.analyze(code)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]['type'], 'Potential TOCTOU')
+        self.assertEqual(results[0]['line'], 7)
+
 
 if __name__ == '__main__':
     unittest.main()
