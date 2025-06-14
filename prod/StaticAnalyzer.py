@@ -1,6 +1,8 @@
 import ast
 import builtins
 from typing import List, Dict, Any
+from radon.complexity import cc_visit
+
 
 class StaticAnalyzer(ast.NodeVisitor):
     def __init__(self):
@@ -177,12 +179,44 @@ class StaticAnalyzer(ast.NodeVisitor):
         return ""
 
     def analyze(self, code: str) -> List[Dict[str, Any]]:
+        # AST Check
         try:
             tree = ast.parse(code)
             self.visit(tree)
         except SyntaxError as e:
             return [{"error": f"Syntax error at line {e.lineno}: {e.text}"}]
+
+        # CFG Check
+        cfg_info = cc_visit(code)
+        self.detect_toctou_flaws(cfg_info, code)
+
         return self.vulnerabilities
+
+    def detect_toctou_flaws(self, cfg_info, code):
+        code_lines = code.splitlines()
+        check_calls = {"os.path.exists", "os.access", "os.stat"}
+        use_calls = {
+            "open", "os.remove", "os.unlink", "os.rename", "os.replace",
+            "shutil.copy", "shutil.move", "shutil.rmtree"
+        }
+
+        for func in cfg_info:
+            func_code = code_lines[func.lineno - 1: func.endline]
+            checks = [line for line in func_code if any(check in line for check in check_calls)]
+            uses = [line for line in func_code if any(use in line for use in use_calls)]
+
+            if checks and uses:
+                for check in checks:
+                    for use in uses:
+                        self.vulnerabilities.append({
+                            "type": "Potential TOCTOU vulnerability",
+                            "check": check.strip(),
+                            "use": use.strip(),
+                            "function": func.name,
+                            "check_line": func.lineno + func_code.index(check),
+                            "use_line": func.lineno + func_code.index(use),
+                            "complexity": func.complexity
+                        })
 
 
 def is_tainted_expr(expr, tainted_vars, vulnerable_sources):
@@ -213,7 +247,8 @@ def generate_feature_vector(vulnerabilities: List[Dict[str, Any]]) -> Dict[str, 
         "uninitialized_variable_usage": 0,
         "tainted_file_access": 0,
         "unsafe_deserialization": 0,
-        "buffer_overflow_risk": 0
+        "buffer_overflow_risk": 0,
+        "toctou_risk": 0
     }
 
     for vuln in vulnerabilities:
@@ -242,5 +277,8 @@ def generate_feature_vector(vulnerabilities: List[Dict[str, Any]]) -> Dict[str, 
             feature_vector["unsafe_deserialization"] += 1
         elif vtype == "Copy without length control, Buffer Overflow risk":
             feature_vector["buffer_overflow_risk"] += 1
+        elif vtype == "Potential TOCTOU vulnerability":
+            feature_vector["toctou_risk"] += 1
 
     return feature_vector
+

@@ -90,7 +90,23 @@
     "suggested_fix": "Validate file paths to avoid path traversal."
   },
   {
-    "error": "Syntax error at line 1: def bad_function:\n",
-    "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code2.py"
+    "problematic_function": "open",
+    "problematic_variable": "--",
+    "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code2.py",
+    "line": 5,
+    "issue": "Dangerous Function Call: Critical Sink Needing Try",
+    "severity": "Low",
+    "confidence": 0.75,
+    "suggested_fix": "Review the code and apply standard security practices."
+  },
+  {
+    "problematic_function": "read_config",
+    "problematic_variable": "--",
+    "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code2.py",
+    "line": "?",
+    "issue": "Potential TOCTOU vulnerability",
+    "severity": "Low",
+    "confidence": 0.72,
+    "suggested_fix": "Review the code and apply standard security practices."
   }
 ]
