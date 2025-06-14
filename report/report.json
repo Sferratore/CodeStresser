@@ -5,8 +5,8 @@
     "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
     "line": 6,
     "issue": "Generally Dangerous Function Call",
-    "severity": "Low",
-    "confidence": 0.76,
+    "severity": "Critical",
+    "confidence": 0.71,
     "suggested_fix": "Avoid calling dangerous calls; use safer alternatives."
   },
   {
@@ -16,7 +16,7 @@
     "line": 6,
     "issue": "Dangerous Function Call: Critical Sink Needing Try",
     "severity": "Low",
-    "confidence": 0.75,
+    "confidence": 0.8,
     "suggested_fix": "Review the code and apply standard security practices."
   },
   {
@@ -25,8 +25,8 @@
     "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
     "line": 6,
     "issue": "Dangerous Function Call: Tainted Parameter Source",
-    "severity": "Medium",
-    "confidence": 0.72,
+    "severity": "Low",
+    "confidence": 0.84,
     "suggested_fix": "Review the code and apply standard security practices."
   },
   {
@@ -35,8 +35,8 @@
     "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
     "line": 14,
     "issue": "Generally Dangerous Function Call",
-    "severity": "Low",
-    "confidence": 0.76,
+    "severity": "Critical",
+    "confidence": 0.71,
     "suggested_fix": "Avoid calling dangerous calls; use safer alternatives."
   },
   {
@@ -46,7 +46,7 @@
     "line": 14,
     "issue": "Dangerous Function Call: Critical Sink Needing Try",
     "severity": "Low",
-    "confidence": 0.75,
+    "confidence": 0.8,
     "suggested_fix": "Review the code and apply standard security practices."
   },
   {
@@ -55,8 +55,8 @@
     "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
     "line": 14,
     "issue": "Dangerous Function Call: Tainted Parameter Source",
-    "severity": "Medium",
-    "confidence": 0.72,
+    "severity": "Low",
+    "confidence": 0.84,
     "suggested_fix": "Review the code and apply standard security practices."
   },
   {
@@ -66,7 +66,7 @@
     "line": 14,
     "issue": "Dangerous Dynamic SQL Query",
     "severity": "High",
-    "confidence": 0.91,
+    "confidence": 0.85,
     "suggested_fix": "Use parameterized queries instead of string concatenation."
   },
   {
@@ -76,7 +76,7 @@
     "line": 21,
     "issue": "Dangerous Function Call: Critical Sink Needing Try",
     "severity": "Low",
-    "confidence": 0.75,
+    "confidence": 0.8,
     "suggested_fix": "Review the code and apply standard security practices."
   },
   {
@@ -85,8 +85,8 @@
     "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
     "line": 21,
     "issue": "Tainted File Access (open)",
-    "severity": "Low",
-    "confidence": 0.91,
+    "severity": "Medium",
+    "confidence": 0.84,
     "suggested_fix": "Validate file paths to avoid path traversal."
   },
   {
@@ -96,7 +96,7 @@
     "line": 5,
     "issue": "Dangerous Function Call: Critical Sink Needing Try",
     "severity": "Low",
-    "confidence": 0.75,
+    "confidence": 0.8,
     "suggested_fix": "Review the code and apply standard security practices."
   },
   {
@@ -105,8 +105,8 @@
     "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code2.py",
     "line": "?",
     "issue": "Potential TOCTOU vulnerability",
-    "severity": "Low",
-    "confidence": 0.72,
+    "severity": "Medium",
+    "confidence": 0.77,
     "suggested_fix": "Review the code and apply standard security practices."
   }
 ]
