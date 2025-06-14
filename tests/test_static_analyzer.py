@@ -215,6 +215,9 @@ def foo(p):
         self.assertEqual(results[0]['line'], 7)
         self.assertEqual(results[1]['type'], 'Potential TOCTOU')
         self.assertEqual(results[1]['line'], 7)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]['type'], 'Potential TOCTOU')
+        self.assertEqual(results[0]['line'], 7)
 
 
 if __name__ == '__main__':
