@@ -19,6 +19,7 @@ The project is organized into the following main modules:
 - pandas
 - scikit-learn
 - joblib
+- radon
 
 # Installation
 
