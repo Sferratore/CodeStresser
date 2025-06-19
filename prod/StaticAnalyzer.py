@@ -6,15 +6,28 @@ from radon.complexity import cc_visit
 
 class StaticAnalyzer(ast.NodeVisitor):
     def __init__(self):
-        self.vulnerabilities: List[Dict[str, Any]] = []
-        self.defined_vars = set()
-        self.sources = {"input", "sys.argv", "os.environ", "request"}
-        self.sinks = {
+
+        # === Vulnerability analysis ===
+        self.vulnerabilities: List[Dict[str, Any]] = []  # List to store detected vulnerabilities
+        self.tainted_vars = set()  # Variables tainted by untrusted sources
+        self.defined_vars = set()  # Variables defined in the code
+
+        # === Analysis context tracking ===
+        self.current_function = None  # Currently analyzed function
+        self.control_depth = 0  # Current control flow nesting depth
+        self.max_control_depth = 0  # Maximum control depth reached
+        self.in_try_block = False  # Whether currently inside a try block
+
+        # === Security elements ===
+        self.sources = {  # Sources of untrusted input
+            "input", "sys.argv", "os.environ", "request"
+        }
+        self.sinks = {  # Sensitive sink functions (where tainted data can be dangerous)
             "eval", "exec", "os.system",
             "subprocess.call", "subprocess.Popen",
             "cursor.execute"
         }
-        self.critical_functions_needing_try = {
+        self.critical_functions_needing_try = {  # Critical functions that should be wrapped in try/except blocks
             "eval", "exec", "os.system",
             "subprocess.call", "subprocess.Popen", "subprocess.run",
             "subprocess.check_call", "subprocess.check_output",
@@ -28,12 +41,9 @@ class StaticAnalyzer(ast.NodeVisitor):
             "int", "float",
             "cursor.execute", "cursor.executemany"
         }
-        self.tainted_vars = set()
-        self.current_function = None
-        self.control_depth = 0
-        self.max_control_depth = 0
-        self.in_try_block = False
-        self.builtins = set(dir(builtins))
+
+        # === Python built-ins ===
+        self.builtins = set(dir(builtins))  # Set of all Python built-in functions and objects. Will use to reference python built-ins and list vulns.
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         self.current_function = node.name
