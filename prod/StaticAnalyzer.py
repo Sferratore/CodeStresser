@@ -53,14 +53,22 @@ class StaticAnalyzer(ast.NodeVisitor):
         # === Python built-ins ===
         self.builtins = set(dir(builtins))  # Set of all Python built-in functions and objects. Will use to reference python built-ins and list vulns.
 
+    # Method that is executed each time a function is visited inside the AST.
     def visit_FunctionDef(self, node: ast.FunctionDef):
+        # === Attribute initialization ===
         self.current_function = node.name
         self.max_control_depth = 0
         self.control_depth = 0
         self.in_try_block = False
+
+        # Adding each function argument to defined variables
         for arg in node.args.args:
             self.defined_vars.add(arg.arg)
+
+        # Visits sub-nodes of the function
         self.generic_visit(node)
+
+        # Checking for depth vulnerability
         if self.max_control_depth > 3:
             self.vulnerabilities.append({
                 "type": "Excessive Control Structure Nesting",
