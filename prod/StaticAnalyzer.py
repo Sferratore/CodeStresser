@@ -193,17 +193,10 @@ class StaticAnalyzer(ast.NodeVisitor):
                         "line": node.lineno
                     })
 
-
+        # Check if the function being called is 'pickle.load', which is known to be unsafe when deserializing untrusted input
         if func_name == "pickle.load":
             self.vulnerabilities.append({
                 "type": "Unsafe Deserialization",
-                "function": func_name,
-                "line": node.lineno
-            })
-
-        if func_name == "strcpy":
-            self.vulnerabilities.append({
-                "type": "Copy without length control, Buffer Overflow risk",
                 "function": func_name,
                 "line": node.lineno
             })
