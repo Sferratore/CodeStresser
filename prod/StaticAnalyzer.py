@@ -77,55 +77,82 @@ class StaticAnalyzer(ast.NodeVisitor):
                 "line": node.lineno
             })
 
+    # Method that is executed each time a try-catch block is visited inside the AST.
     def visit_Try(self, node: ast.Try):
         old = self.in_try_block
         self.in_try_block = True
         self.generic_visit(node)
         self.in_try_block = old
 
+    # Method that is executed each time an if(else-elif) block is visited inside the AST.
     def visit_If(self, node: ast.If):
         self.control_depth += 1
         self.max_control_depth = max(self.max_control_depth, self.control_depth)
         self.generic_visit(node)
         self.control_depth -= 1
 
+    # Method that is executed each time a while block is visited inside the AST.
     def visit_While(self, node: ast.While):
         self.control_depth += 1
         self.max_control_depth = max(self.max_control_depth, self.control_depth)
         self.generic_visit(node)
         self.control_depth -= 1
 
+    # Method that is executed each time a for cycle is visited inside the AST.
     def visit_For(self, node: ast.For):
         self.control_depth += 1
         self.max_control_depth = max(self.max_control_depth, self.control_depth)
         self.generic_visit(node)
         self.control_depth -= 1
 
+    # Method that is executed each time an assignment is visited inside the AST.
     def visit_Assign(self, node: ast.Assign):
+        # Get the value being assigned (not used here, but accessible if needed)
         value = node.value
+
+        # Iterate over all assignment targets (e.g., a, b = 1, 2 → two targets)
         for target in node.targets:
+            # Check if the target is a simple variable name (not an attribute or subscript)
             if isinstance(target, ast.Name):
+                # Add the variable name to the set of defined variables
                 self.defined_vars.add(target.id)
 
+        # In case the value of assignment is a method/function call, we check for the functions
         if isinstance(value, ast.Call) and isinstance(value.func, ast.Name):
+            # If the method/function comes from untrusted input (self.sources) we mark the variable as tainted
             if value.func.id in self.sources:
                 for target in node.targets:
                     if isinstance(target, ast.Name):
                         self.tainted_vars.add(target.id)
 
+        # The assigned value is a subscript operation (e.g., something[...]).
+        # We're specifically looking for cases like: request.GET['key']
         elif isinstance(value, ast.Subscript):
+            # The subscript is being applied to an attribute, e.g., request.GET
             if isinstance(value.value, ast.Attribute):
                 attr = value.value
-                if isinstance(attr.value, ast.Name) and attr.value.id == "request" and attr.attr in {"GET", "POST", "args", "form"}:
+                # Now check if the base of the attribute is a variable named 'request'
+                # and the attribute being accessed is a common input source like GET, POST, args, or form.
+                # These are typical user-controlled dictionaries in web frameworks (e.g., Flask, Django).
+                if (
+                        isinstance(attr.value, ast.Name) and
+                        attr.value.id == "request" and
+                        attr.attr in {"GET", "POST", "args", "form"}
+                ):
+                    # If all conditions match, we assume this assignment extracts user input
+                    # into a local variable, which makes the variable tainted (i.e., potentially unsafe).
                     for target in node.targets:
                         if isinstance(target, ast.Name):
+                            # Mark the variable on the left-hand side as tainted
                             self.tainted_vars.add(target.id)
 
+        # We mark the assignment variable(s) as tainted if the value source is also tainted.
         elif is_tainted_expr(value, self.tainted_vars, self.sources):
             for target in node.targets:
                 if isinstance(target, ast.Name):
                     self.tainted_vars.add(target.id)
 
+        # Continuing visiting nodes...
         self.generic_visit(node)
 
     def visit_Call(self, node: ast.Call):
