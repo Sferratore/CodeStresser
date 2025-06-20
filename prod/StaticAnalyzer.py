@@ -53,7 +53,7 @@ class StaticAnalyzer(ast.NodeVisitor):
         # === Python built-ins ===
         self.builtins = set(dir(builtins))  # Set of all Python built-in functions and objects. Will use to reference python built-ins and list vulns.
 
-    # Method that is executed each time a function is visited inside the AST.
+    # Method that is executed each time a function/method definition is visited inside the AST.
     def visit_FunctionDef(self, node: ast.FunctionDef):
         # === Attribute initialization ===
         self.current_function = node.name
@@ -154,6 +154,7 @@ class StaticAnalyzer(ast.NodeVisitor):
 
         # Continuing visiting nodes...
         self.generic_visit(node)
+
 
     def visit_Call(self, node: ast.Call):
         func_name = self.get_full_func_name(node.func)
