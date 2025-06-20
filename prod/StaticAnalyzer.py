@@ -251,19 +251,29 @@ class StaticAnalyzer(ast.NodeVisitor):
         # Return the list of detected vulnerabilities, if any
         return self.vulnerabilities
 
+    # Checks for toctou (Time-Of-Check (To) Time-Of-Use) flaw inside the CFG
     def detect_toctou_flaws(self, cfg_info, code):
+        # Split the original source code into individual lines for easier access by line number
         code_lines = code.splitlines()
+
+        # Define sets of functions:
+        # - 'check_calls' are functions that check for a file's existence or permissions
+        # - 'use_calls' are functions that act on files (e.g., open, delete, move)
         check_calls = {"os.path.exists", "os.access", "os.stat"}
         use_calls = {
             "open", "os.remove", "os.unlink", "os.rename", "os.replace",
             "shutil.copy", "shutil.move", "shutil.rmtree"
         }
 
+        # Iterate through each function in the control flow graph (CFG)
         for func in cfg_info:
+            # Extract the lines of code corresponding to this function's body
             func_code = code_lines[func.lineno - 1: func.endline]
+            # Look for 'check' operations inside the function
             checks = [line for line in func_code if any(check in line for check in check_calls)]
+            # Look for 'use' operations inside the same function
             uses = [line for line in func_code if any(use in line for use in use_calls)]
-
+            # If both a check and a use are present, flag them as a potential TOCTOU flaw
             if checks and uses:
                 for check in checks:
                     for use in uses:
@@ -277,6 +287,7 @@ class StaticAnalyzer(ast.NodeVisitor):
                             "complexity": func.complexity
                         })
 
+    # Tool used with an AST func as argument to get back the full name of it
     def get_full_func_name(self, func) -> str:
         # If the function is a simple name (e.g., eval, print), return its identifier
         if isinstance(func, ast.Name):
