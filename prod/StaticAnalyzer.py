@@ -3,6 +3,14 @@ import builtins
 from typing import List, Dict, Any
 from radon.complexity import cc_visit
 
+# StaticAnalyzer is a security-focused static analysis engine.
+#
+# Currently, it analyzes AST (Abstract Syntax Tree) and CFG (Control Flow Graph) of the code.
+# It uses the visitor pattern by defining visit_* methods (e.g., visit_Assign, visit_Call),
+# which are automatically dispatched by ast.NodeVisitor when corresponding AST nodes are encountered.
+# The CFG analysis happens separately to the visitor AST logic.
+#
+# This hybrid AST/CFG analysis allows it to detect various vulnerabilities.
 
 class StaticAnalyzer(ast.NodeVisitor):
     def __init__(self):
