@@ -155,10 +155,11 @@ class StaticAnalyzer(ast.NodeVisitor):
         # Continuing visiting nodes...
         self.generic_visit(node)
 
-
+    # Method that is executed each time a function/method call is visited inside the AST.
     def visit_Call(self, node: ast.Call):
         func_name = self.get_full_func_name(node.func)
 
+        # Checks for dangerous functions in case the function called is a sink
         if func_name in self.sinks:
             self.vulnerabilities.append({
                 "type": "Generally Dangerous Function Call",
@@ -166,6 +167,7 @@ class StaticAnalyzer(ast.NodeVisitor):
                 "line": node.lineno
             })
 
+        # Checks for function needing try and if they are in a try block
         if func_name in self.critical_functions_needing_try and not self.in_try_block:
             self.vulnerabilities.append({
                 "type": "Dangerous Function Call: Critical Sink Needing Try",
@@ -173,12 +175,17 @@ class StaticAnalyzer(ast.NodeVisitor):
                 "line": node.lineno
             })
 
-        if func_name in self.sinks and func_name != "open":
+        # Checks if a sink is executed with tainted sources of data
+        if func_name in self.sinks:
             for arg in node.args:
                 if (
-                    (isinstance(arg, ast.Call) and isinstance(arg.func, ast.Name) and arg.func.id in self.sources)
-                    or (isinstance(arg, ast.Name) and arg.id in self.tainted_vars)
-                    or (isinstance(arg, (ast.BinOp, ast.JoinedStr)) and is_tainted_expr(arg, self.tainted_vars, self.sources))
+                        # Condition 1: The argument is a function call (e.g., input()) and the function name is in the set of taint sources
+                        (isinstance(arg, ast.Call) and isinstance(arg.func, ast.Name) and arg.func.id in self.sources)
+                        # Condition 2: The argument is a variable, and that variable is already marked as tainted
+                        or (isinstance(arg, ast.Name) and arg.id in self.tainted_vars)
+                        # Condition 3: The argument is an expression (binary operation or f-string), and the expression is tainted
+                        or (isinstance(arg, (ast.BinOp, ast.JoinedStr)) and is_tainted_expr(arg, self.tainted_vars,
+                                                                                            self.sources))
                 ):
                     self.vulnerabilities.append({
                         "type": "Dangerous Function Call: Tainted Parameter Source",
@@ -186,14 +193,6 @@ class StaticAnalyzer(ast.NodeVisitor):
                         "line": node.lineno
                     })
 
-        if func_name == "open" and node.args:
-            arg0 = node.args[0]
-            if isinstance(arg0, ast.Name) and arg0.id in self.tainted_vars:
-                self.vulnerabilities.append({
-                    "type": "Tainted File Access (open)",
-                    "function": func_name,
-                    "line": node.lineno
-                })
 
         if func_name == "pickle.load":
             self.vulnerabilities.append({
