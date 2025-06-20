@@ -201,14 +201,23 @@ class StaticAnalyzer(ast.NodeVisitor):
                 "line": node.lineno
             })
 
+        # Check if the function being called is a method named "execute"
+        # (e.g., cursor.execute(...)), which indicates a potential SQL execution
         if isinstance(node.func, ast.Attribute) and node.func.attr == "execute":
+            # Ensure that the function has at least one argument (typically the SQL query)
             if node.args:
-                sql_arg = node.args[0]
-                if isinstance(sql_arg, (ast.BinOp, ast.JoinedStr)) and is_tainted_expr(sql_arg, self.tainted_vars, self.sources):
+                sql_arg = node.args[0]  # Extract the first argument of the execute() call
+
+                # Case 1: The argument is a binary operation (e.g., string concatenation)
+                # or a formatted string (f-string), and it's tainted (e.g., includes user input)
+                if isinstance(sql_arg, (ast.BinOp, ast.JoinedStr)) and is_tainted_expr(sql_arg, self.tainted_vars,
+                                                                                           self.sources):
                     self.vulnerabilities.append({
-                        "type": "Dangerous Dynamic SQL Query",
-                        "line": node.lineno
+                        "type": "Dangerous Dynamic SQL Query",  # Vulnerability type for reporting
+                        "line": node.lineno  # Line number where it occurs
                     })
+
+                # Case 2: The argument is a variable name that has been previously marked as tainted
                 elif isinstance(sql_arg, ast.Name) and sql_arg.id in self.tainted_vars:
                     self.vulnerabilities.append({
                         "type": "Dangerous Dynamic SQL Query",
