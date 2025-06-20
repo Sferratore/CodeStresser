@@ -223,28 +223,32 @@ class StaticAnalyzer(ast.NodeVisitor):
                         "type": "Dangerous Dynamic SQL Query",
                         "line": node.lineno
                     })
-
+        # Visits the node, continues..
         self.generic_visit(node)
 
-    def get_full_func_name(self, func) -> str:
-        if isinstance(func, ast.Name):
-            return func.id
-        elif isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name):
-            return f"{func.value.id}.{func.attr}"
-        return ""
-
+    # This is the orchestrator method that starts the full analysis (visit of AST tree + CFG)
     def analyze(self, code: str) -> List[Dict[str, Any]]:
-        # AST Check
+        # === AST Check ===
         try:
+            # Parse the input Python code into an Abstract Syntax Tree (AST)
             tree = ast.parse(code)
+
+            # Start visiting the AST nodes using the visitor pattern
             self.visit(tree)
+
         except SyntaxError as e:
+            # If the code is not valid Python syntax, return the syntax error information
             return [{"error": f"Syntax error at line {e.lineno}: {e.text}"}]
 
-        # CFG Check
+        # === CFG Check ===
+        # Build a Control Flow Graph (CFG) using an external visitor (cc_visit)
         cfg_info = cc_visit(code)
+
+        # Run TOCTOU (Time-Of-Check to Time-Of-Use) vulnerability detection on the CFG
         self.detect_toctou_flaws(cfg_info, code)
 
+        # === Results === 
+        # Return the list of detected vulnerabilities, if any
         return self.vulnerabilities
 
     def detect_toctou_flaws(self, cfg_info, code):
@@ -272,6 +276,17 @@ class StaticAnalyzer(ast.NodeVisitor):
                             "use_line": func.lineno + func_code.index(use),
                             "complexity": func.complexity
                         })
+
+    def get_full_func_name(self, func) -> str:
+        # If the function is a simple name (e.g., eval, print), return its identifier
+        if isinstance(func, ast.Name):
+            return func.id
+        # If the function is a method of a named object (e.g., subprocess.call),
+        # return it in the format "object.function"
+        elif isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name):
+            return f"{func.value.id}.{func.attr}"
+        # In all other cases (e.g., nested attributes or complex expressions), return an empty string
+        return ""
 
 
 def is_tainted_expr(expr, tainted_vars, vulnerable_sources):
