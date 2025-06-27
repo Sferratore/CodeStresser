@@ -149,7 +149,7 @@ class StaticAnalyzer(ast.NodeVisitor):
                             self.tainted_vars.add(target.id)
 
         # We mark the assignment variable(s) as tainted if the value source is also tainted.
-        elif is_tainted_expr(value, self.tainted_vars, self.sources):
+        elif self.is_tainted_expr(value):
             for target in node.targets:
                 if isinstance(target, ast.Name):
                     self.tainted_vars.add(target.id)
@@ -186,8 +186,7 @@ class StaticAnalyzer(ast.NodeVisitor):
                         # Condition 2: The argument is a variable, and that variable is already marked as tainted
                         or (isinstance(arg, ast.Name) and arg.id in self.tainted_vars)
                         # Condition 3: The argument is an expression (binary operation or f-string), and the expression is tainted
-                        or (isinstance(arg, (ast.BinOp, ast.JoinedStr)) and is_tainted_expr(arg, self.tainted_vars,
-                                                                                            self.sources))
+                        or (isinstance(arg, (ast.BinOp, ast.JoinedStr)) and self.is_tainted_expr(arg))
                 ):
                     self.vulnerabilities.append({
                         "type": "Dangerous Function Call: Tainted Parameter Source",
@@ -212,8 +211,7 @@ class StaticAnalyzer(ast.NodeVisitor):
 
                 # Case 1: The argument is a binary operation (e.g., string concatenation)
                 # or a formatted string (f-string), and it's tainted (e.g., includes user input)
-                if isinstance(sql_arg, (ast.BinOp, ast.JoinedStr)) and is_tainted_expr(sql_arg, self.tainted_vars,
-                                                                                           self.sources):
+                if isinstance(sql_arg, (ast.BinOp, ast.JoinedStr)) and self.is_tainted_expr(sql_arg):
                     self.vulnerabilities.append({
                         "type": "Dangerous Dynamic SQL Query",  # Vulnerability type for reporting
                         "line": node.lineno  # Line number where it occurs
@@ -312,17 +310,17 @@ class StaticAnalyzer(ast.NodeVisitor):
         return ""
 
 
-def is_tainted_expr(expr, tainted_vars, vulnerable_sources):
-    if isinstance(expr, ast.Name):
-        return expr.id in tainted_vars
-    elif isinstance(expr, ast.BinOp):
-        return is_tainted_expr(expr.left, tainted_vars, vulnerable_sources) or is_tainted_expr(expr.right, tainted_vars, vulnerable_sources)
-    elif isinstance(expr, ast.Call):
-        if isinstance(expr.func, ast.Name):
-            return expr.func.id in vulnerable_sources
-    elif isinstance(expr, ast.JoinedStr):
-        return any(is_tainted_expr(value, tainted_vars, vulnerable_sources) for value in expr.values)
-    return False
+    def is_tainted_expr(self, expr):
+        if isinstance(expr, ast.Name):
+            return expr.id in self.tainted_vars
+        elif isinstance(expr, ast.BinOp):
+            return self.is_tainted_expr(expr.left) or self.is_tainted_expr(expr.right)
+        elif isinstance(expr, ast.Call):
+            if isinstance(expr.func, ast.Name):
+                return expr.func.id in self.vulnerable_sources
+        elif isinstance(expr, ast.JoinedStr):
+            return any(self.is_tainted_expr(value) for value in expr.values)
+        return False
 
 
 
