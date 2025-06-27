@@ -82,16 +82,6 @@
   {
     "problematic_function": "open",
     "problematic_variable": "--",
-    "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code.py",
-    "line": 21,
-    "issue": "Tainted File Access (open)",
-    "severity": "Medium",
-    "confidence": 0.84,
-    "suggested_fix": "Validate file paths to avoid path traversal."
-  },
-  {
-    "problematic_function": "open",
-    "problematic_variable": "--",
     "file": "C:\\Users\\39324\\Desktop\\CodeStresser\\prod\\..\\code\\code2.py",
     "line": 5,
     "issue": "Dangerous Function Call: Critical Sink Needing Try",

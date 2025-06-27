@@ -15,18 +15,18 @@ from radon.complexity import cc_visit
 class StaticAnalyzer(ast.NodeVisitor):
     def __init__(self):
 
-        # === Vulnerability analysis ===
+        # Vulnerability analysis
         self.vulnerabilities: List[Dict[str, Any]] = []  # List to store detected vulnerabilities
         self.tainted_vars = set()  # Variables tainted by untrusted sources
         self.defined_vars = set()  # Variables defined in the code
 
-        # === Analysis context tracking ===
+        # Analysis context tracking
         self.current_function = None  # Currently analyzed function
         self.control_depth = 0  # Current control flow nesting depth
         self.max_control_depth = 0  # Maximum control depth reached
         self.in_try_block = False  # Whether currently inside a try block
 
-        # === Security elements ===
+        # Security elements
         self.sources = {  # Sources of untrusted input
             "input", "sys.argv", "os.environ", "request"
         }
@@ -50,12 +50,14 @@ class StaticAnalyzer(ast.NodeVisitor):
             "cursor.execute", "cursor.executemany"
         }
 
-        # === Python built-ins ===
+        # Python built-ins
         self.builtins = set(dir(builtins))  # Set of all Python built-in functions and objects. Will use to reference python built-ins and list vulns.
+
+    # === AST METHODS ===
 
     # Method that is executed each time a function/method definition is visited inside the AST.
     def visit_FunctionDef(self, node: ast.FunctionDef):
-        # === Attribute initialization ===
+        # Attribute initialization
         self.current_function = node.name
         self.max_control_depth = 0
         self.control_depth = 0
@@ -226,32 +228,10 @@ class StaticAnalyzer(ast.NodeVisitor):
         # Visits the node, continues..
         self.generic_visit(node)
 
-    # This is the orchestrator method that starts the full analysis (visit of AST tree + CFG)
-    def analyze(self, code: str) -> List[Dict[str, Any]]:
-        # === AST Check ===
-        try:
-            # Parse the input Python code into an Abstract Syntax Tree (AST)
-            tree = ast.parse(code)
 
-            # Start visiting the AST nodes using the visitor pattern
-            self.visit(tree)
+    # === CFG METHODS ===
 
-        except SyntaxError as e:
-            # If the code is not valid Python syntax, return the syntax error information
-            return [{"error": f"Syntax error at line {e.lineno}: {e.text}"}]
-
-        # === CFG Check ===
-        # Build a Control Flow Graph (CFG) using an external visitor (cc_visit)
-        cfg_info = cc_visit(code)
-
-        # Run TOCTOU (Time-Of-Check to Time-Of-Use) vulnerability detection on the CFG
-        self.detect_toctou_flaws(cfg_info, code)
-
-        # === Results === 
-        # Return the list of detected vulnerabilities, if any
-        return self.vulnerabilities
-
-    # Checks for toctou (Time-Of-Check (To) Time-Of-Use) flaw inside the CFG
+        # Checks for toctou (Time-Of-Check (To) Time-Of-Use) flaw inside the CFG
     def detect_toctou_flaws(self, cfg_info, code):
         # Split the original source code into individual lines for easier access by line number
         code_lines = code.splitlines()
@@ -286,6 +266,38 @@ class StaticAnalyzer(ast.NodeVisitor):
                             "use_line": func.lineno + func_code.index(use),
                             "complexity": func.complexity
                         })
+
+
+
+    # === ORCHESTRATOR ===
+
+    # This is the orchestrator method that starts the full analysis (visit of AST tree + CFG)
+    def analyze(self, code: str) -> List[Dict[str, Any]]:
+        # AST Check
+        try:
+            # Parse the input Python code into an Abstract Syntax Tree (AST)
+            tree = ast.parse(code)
+
+            # Start visiting the AST nodes using the visitor pattern
+            self.visit(tree)
+
+        except SyntaxError as e:
+            # If the code is not valid Python syntax, return the syntax error information
+            return [{"error": f"Syntax error at line {e.lineno}: {e.text}"}]
+
+        # CFG Check
+        # Build a Control Flow Graph (CFG) using an external visitor (cc_visit)
+        cfg_info = cc_visit(code)
+
+        # Run TOCTOU (Time-Of-Check to Time-Of-Use) vulnerability detection on the CFG
+        self.detect_toctou_flaws(cfg_info, code)
+
+        # Results
+        # Return the list of detected vulnerabilities, if any
+        return self.vulnerabilities
+
+
+    # === TOOLS ===
 
     # Tool used with an AST func as argument to get back the full name of it
     def get_full_func_name(self, func) -> str:
