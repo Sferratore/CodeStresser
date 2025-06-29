@@ -237,10 +237,71 @@ class StaticAnalyzer(ast.NodeVisitor):
         # Define sets of functions:
         # - 'check_calls' are functions that check for a file's existence or permissions
         # - 'use_calls' are functions that act on files (e.g., open, delete, move)
-        check_calls = {"os.path.exists", "os.access", "os.stat"}
+        check_calls = {
+            "os.path.exists",
+            "os.path.lexists",
+            "os.path.isfile",
+            "os.path.isdir",
+            "os.path.islink",
+            "os.access",
+            "os.stat",
+            "os.lstat",
+            "os.path.getsize",
+            "os.path.getmtime",
+            "os.path.getatime",
+            "os.path.getctime",
+            "os.path.samefile",
+            "os.path.sameopenfile",
+            "os.path.ismount",
+            "os.scandir",
+            "os.listdir",
+            "os.readlink",
+            "os.environ.get",
+            "pathlib.Path.exists",
+            "pathlib.Path.is_file",
+            "pathlib.Path.is_dir",
+            "pathlib.Path.stat"
+        }
+
         use_calls = {
-            "open", "os.remove", "os.unlink", "os.rename", "os.replace",
-            "shutil.copy", "shutil.move", "shutil.rmtree"
+            "open",
+            "os.open",
+            "os.remove",
+            "os.unlink",
+            "os.rename",
+            "os.replace",
+            "os.rmdir",
+            "os.removedirs",
+            "os.mkdir",
+            "os.makedirs",
+            "shutil.copy",
+            "shutil.copy2",
+            "shutil.copytree",
+            "shutil.move",
+            "shutil.rmtree",
+            "tempfile.NamedTemporaryFile",
+            "tempfile.mkstemp",
+            "tempfile.mkdtemp",
+            "os.write",
+            "os.chmod",
+            "os.chown",
+            "os.fchmod",
+            "os.fchown",
+            "os.truncate",
+            "os.ftruncate",
+            "os.symlink",
+            "os.link",
+            "os.fsync",
+            "os.fdatasync",
+            "json.load",  
+            "pickle.load",
+            "pathlib.Path.unlink",
+            "pathlib.Path.rename",
+            "pathlib.Path.replace",
+            "pathlib.Path.rmdir",
+            "pathlib.Path.mkdir",
+            "pathlib.Path.write_text",
+            "pathlib.Path.write_bytes"
         }
 
         # Iterate through each function in the control flow graph (CFG)
