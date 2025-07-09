@@ -229,100 +229,66 @@ class StaticAnalyzer(ast.NodeVisitor):
 
     # === CFG METHODS ===
 
-        # Checks for toctou (Time-Of-Check (To) Time-Of-Use) flaw inside the CFG
+    # Checks for toctou (Time-Of-Check (To) Time-Of-Use) flaw inside the CFG
     def detect_toctou_flaws(self, cfg_info, code):
-        # Split the original source code into individual lines for easier access by line number
+        # Split the entire source code into lines for easy indexing
         code_lines = code.splitlines()
 
-        # Define sets of functions:
-        # - 'check_calls' are functions that check for a file's existence or permissions
-        # - 'use_calls' are functions that act on files (e.g., open, delete, move)
+        # Define functions typically used to check file existence or permissions
         check_calls = {
-            "os.path.exists",
-            "os.path.lexists",
-            "os.path.isfile",
-            "os.path.isdir",
-            "os.path.islink",
-            "os.access",
-            "os.stat",
-            "os.lstat",
-            "os.path.getsize",
-            "os.path.getmtime",
-            "os.path.getatime",
-            "os.path.getctime",
-            "os.path.samefile",
-            "os.path.sameopenfile",
-            "os.path.ismount",
-            "os.scandir",
-            "os.listdir",
-            "os.readlink",
-            "os.environ.get",
-            "pathlib.Path.exists",
-            "pathlib.Path.is_file",
-            "pathlib.Path.is_dir",
-            "pathlib.Path.stat"
+            "os.path.exists", "os.path.lexists", "os.path.isfile", "os.path.isdir", "os.path.islink",
+            "os.access", "os.stat", "os.lstat", "os.path.getsize", "os.path.getmtime", "os.path.getctime",
+            "os.path.samefile", "os.path.sameopenfile", "os.path.ismount", "os.scandir", "os.listdir",
+            "os.readlink", "os.environ.get", "pathlib.Path.exists", "pathlib.Path.is_file",
+            "pathlib.Path.is_dir", "pathlib.Path.stat"
         }
 
+        # Define functions that operate on or modify files — the "use" phase
         use_calls = {
-            "open",
-            "os.open",
-            "os.remove",
-            "os.unlink",
-            "os.rename",
-            "os.replace",
-            "os.rmdir",
-            "os.removedirs",
-            "os.mkdir",
-            "os.makedirs",
-            "shutil.copy",
-            "shutil.copy2",
-            "shutil.copytree",
-            "shutil.move",
-            "shutil.rmtree",
-            "tempfile.NamedTemporaryFile",
-            "tempfile.mkstemp",
-            "tempfile.mkdtemp",
-            "os.write",
-            "os.chmod",
-            "os.chown",
-            "os.fchmod",
-            "os.fchown",
-            "os.truncate",
-            "os.ftruncate",
-            "os.symlink",
-            "os.link",
-            "os.fsync",
-            "os.fdatasync",
-            "json.load",  
-            "pickle.load",
-            "pathlib.Path.unlink",
-            "pathlib.Path.rename",
-            "pathlib.Path.replace",
-            "pathlib.Path.rmdir",
-            "pathlib.Path.mkdir",
-            "pathlib.Path.write_text",
-            "pathlib.Path.write_bytes"
+            "open", "os.open", "os.remove", "os.unlink", "os.rename", "os.replace", "os.rmdir", "os.removedirs",
+            "os.mkdir", "os.makedirs", "shutil.copy", "shutil.copy2", "shutil.copytree", "shutil.move",
+            "shutil.rmtree", "tempfile.NamedTemporaryFile", "tempfile.mkstemp", "tempfile.mkdtemp",
+            "os.write", "os.chmod", "os.chown", "os.fchmod", "os.fchown", "os.truncate", "os.ftruncate",
+            "os.symlink", "os.link", "os.fsync", "os.fdatasync", "json.load", "pickle.load",
+            "pathlib.Path.unlink", "pathlib.Path.rename", "pathlib.Path.replace", "pathlib.Path.rmdir",
+            "pathlib.Path.mkdir", "pathlib.Path.write_text", "pathlib.Path.write_bytes"
         }
 
-        # Iterate through each function in the control flow graph (CFG)
+        # Iterate over each function block in the control flow graph
         for func in cfg_info:
-            # Extract the lines of code corresponding to this function's body
+            # Extract the source code lines corresponding to this specific function
             func_code = code_lines[func.lineno - 1: func.endline]
-            # Look for 'check' operations inside the function
-            checks = [line for line in func_code if any(check in line for check in check_calls)]
-            # Look for 'use' operations inside the same function
-            uses = [line for line in func_code if any(use in line for use in use_calls)]
-            # If both a check and a use are present, flag them as a potential TOCTOU flaw
-            if checks and uses:
-                for check in checks:
-                    for use in uses:
+
+            # Prepare two lists: one for all 'check' operations, one for all 'use' operations
+            check_lines = []
+            use_lines = []
+
+            # Go through each line in the function and classify it
+            for line in func_code:
+                # If the line contains any check function, store it
+                if any(check_call in line for check_call in check_calls):
+                    check_lines.append(line)
+                # If the line contains any use function, store it
+                if any(use_call in line for use_call in use_calls):
+                    use_lines.append(line)
+
+            # For each combination of check and use lines,
+            # we want to verify if they act on the same variable/resource
+            for check_line in check_lines:
+                for use_line in use_lines:
+                    # Extract all identifiers (e.g., variable names) used in the lines
+                    check_vars = self.extract_identifiers(check_line)
+                    use_vars = self.extract_identifiers(use_line)
+
+                    # If there is any overlap (same variable used in both), we have a potential TOCTOU
+                    if check_vars & use_vars:
                         self.vulnerabilities.append({
                             "type": "Potential TOCTOU vulnerability",
-                            "check": check.strip(),
-                            "use": use.strip(),
+                            "check": check_line.strip(),
+                            "use": use_line.strip(),
                             "function": func.name,
-                            "check_line": func.lineno + func_code.index(check),
-                            "use_line": func.lineno + func_code.index(use),
+                            "check_line": func.lineno + func_code.index(check_line),
+                            "use_line": func.lineno + func_code.index(use_line),
                             "complexity": func.complexity
                         })
 
@@ -382,6 +348,14 @@ class StaticAnalyzer(ast.NodeVisitor):
         elif isinstance(expr, ast.JoinedStr):
             return any(self.is_tainted_expr(value) for value in expr.values)
         return False
+
+    def extract_identifiers(self, line: str) -> set:
+        """
+        Extracts all Python-like identifiers (variable names, object names) from a line of code.
+        This is a basic approximation and does not parse the AST.
+        """
+        import re
+        return set(re.findall(r"[a-zA-Z_][a-zA-Z0-9_]*", line))
 
 
 
