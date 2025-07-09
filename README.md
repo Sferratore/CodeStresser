@@ -1,6 +1,6 @@
 # CodeStresser
 
-CodeStresser is a static code analysis tool that relies on ML. The system analyzes source code, detects common vulnerabilities, and generates a report estimating the severity and confidence level for each finding.
+CodeStresser is a static code analysis tool that relies on Machine Learning. The system analyzes source code, detects common vulnerabilities, and generates a report estimating the severity and confidence level for each finding.
 
 # Architecture
 
